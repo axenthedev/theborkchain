@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -19,6 +20,11 @@ export default {
 		},
 		extend: {
 			colors: {
+				bork: {
+					green: "#39FF14",
+					"green-dark": "#32D912",
+					"green-light": "#7DFF66",
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -84,11 +90,34 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' },
+				},
+				'pulse-green': {
+					'0%, 100%': { boxShadow: '0 0 0 0 rgba(57, 255, 20, 0.4)' },
+					'50%': { boxShadow: '0 0 0 20px rgba(57, 255, 20, 0)' },
+				},
+				'bounce-small': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-5px)' },
+				},
+				'glow': {
+					'0%, 100%': { filter: 'brightness(100%)' },
+					'50%': { filter: 'brightness(150%)' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'float': 'float 3s ease-in-out infinite',
+				'pulse-green': 'pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'bounce-small': 'bounce-small 2s ease-in-out infinite',
+				'glow': 'glow 2s ease-in-out infinite'
+			},
+			fontFamily: {
+				'bork': ['Montserrat', 'sans-serif'],
 			}
 		}
 	},
