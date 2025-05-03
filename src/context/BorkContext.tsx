@@ -10,6 +10,7 @@ export interface Task {
   completed: boolean;
   difficulty: 'easy' | 'medium' | 'hard';
   type: 'daily' | 'weekly' | 'one-time';
+  destinationUrl?: string; // Added destination URL
 }
 
 export interface User {
@@ -20,7 +21,10 @@ export interface User {
   referralCode: string;
   referredBy: string | null;
   referrals: string[];
-  tasksCompleted: string[];
+  tasksCompleted: {
+    taskId: string;
+    completedAt: string;
+  }[];
   joinedAt: string;
 }
 
@@ -38,6 +42,7 @@ interface BorkContextType {
   disconnectWallet: () => void;
   completeTask: (taskId: string) => void;
   copyReferralLink: () => void;
+  getReferralLink: () => string;
 }
 
 const BorkContext = createContext<BorkContextType | undefined>(undefined);
@@ -51,7 +56,8 @@ const mockTasks: Task[] = [
     reward: 50,
     completed: false,
     difficulty: 'easy',
-    type: 'one-time'
+    type: 'one-time',
+    destinationUrl: 'https://twitter.com/BorkChain'
   },
   {
     id: '2',
@@ -60,7 +66,8 @@ const mockTasks: Task[] = [
     reward: 75,
     completed: false,
     difficulty: 'easy',
-    type: 'one-time'
+    type: 'one-time',
+    destinationUrl: 'https://discord.gg/borkchain'
   },
   {
     id: '3',
@@ -78,7 +85,8 @@ const mockTasks: Task[] = [
     reward: 100,
     completed: false,
     difficulty: 'medium',
-    type: 'weekly'
+    type: 'weekly',
+    destinationUrl: 'https://discord.gg/borkchain-ama'
   },
   {
     id: '5',
@@ -87,7 +95,8 @@ const mockTasks: Task[] = [
     reward: 200,
     completed: false,
     difficulty: 'hard',
-    type: 'daily'
+    type: 'daily',
+    destinationUrl: 'https://twitter.com/intent/tweet?hashtags=BorkChain'
   },
 ];
 
@@ -101,7 +110,10 @@ const mockUsers: User[] = [
     referralCode: 'BORK123',
     referredBy: null,
     referrals: [],
-    tasksCompleted: [],
+    tasksCompleted: [
+      { taskId: '1', completedAt: new Date().toISOString() },
+      { taskId: '2', completedAt: new Date().toISOString() }
+    ],
     joinedAt: '2023-05-01'
   },
   {
@@ -112,21 +124,85 @@ const mockUsers: User[] = [
     referralCode: 'BORK456',
     referredBy: 'BORK123',
     referrals: [],
-    tasksCompleted: ['1', '2'],
+    tasksCompleted: [
+      { taskId: '1', completedAt: new Date().toISOString() },
+      { taskId: '2', completedAt: new Date().toISOString() }
+    ],
     joinedAt: '2023-05-15'
   }
 ];
+
+const LOCAL_STORAGE_USERS_KEY = 'borkchain_users';
+const LOCAL_STORAGE_TASKS_KEY = 'borkchain_tasks';
 
 export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [account, setAccount] = useState<string | null>(null);
   const [balance, setBalance] = useState(0);
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [referralCode, setReferralCode] = useState('');
   const [referrals, setReferrals] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Initialize data from localStorage or use mock data
+  useEffect(() => {
+    const storedUsers = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
+    const storedTasks = localStorage.getItem(LOCAL_STORAGE_TASKS_KEY);
+    
+    if (storedUsers) {
+      setUsers(JSON.parse(storedUsers));
+    } else {
+      setUsers(mockUsers);
+      localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(mockUsers));
+    }
+    
+    if (storedTasks) {
+      setTasks(JSON.parse(storedTasks));
+    } else {
+      setTasks(mockTasks);
+      localStorage.setItem(LOCAL_STORAGE_TASKS_KEY, JSON.stringify(mockTasks));
+    }
+  }, []);
+
+  // Handle referral from URL when app loads
+  useEffect(() => {
+    const handleReferral = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const refCode = urlParams.get('ref');
+      
+      if (refCode && account) {
+        // Find if this is a valid referral code
+        const referrer = users.find(user => 
+          user.address.toLowerCase() === refCode.toLowerCase() || 
+          user.referralCode.toLowerCase() === refCode.toLowerCase()
+        );
+        
+        if (referrer) {
+          const currentUser = users.find(u => u.address.toLowerCase() === account.toLowerCase());
+          
+          if (currentUser && !currentUser.referredBy && currentUser.address.toLowerCase() !== referrer.address.toLowerCase()) {
+            // Update the current user with the referral
+            const updatedUsers = users.map(u => {
+              if (u.address.toLowerCase() === account.toLowerCase()) {
+                return { ...u, referredBy: referrer.address };
+              } else if (u.address.toLowerCase() === referrer.address.toLowerCase()) {
+                return { ...u, referrals: [...u.referrals, account] };
+              }
+              return u;
+            });
+            
+            setUsers(updatedUsers);
+            localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(updatedUsers));
+            toast.success(`You've been referred by ${referrer.address}`);
+          }
+        }
+      }
+    };
+    
+    handleReferral();
+  }, [account, users]);
 
   const connectWallet = async () => {
     if (!window.ethereum) {
@@ -154,10 +230,13 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setIsAdmin(foundUser.isAdmin);
         
         // Mark completed tasks
+        const completedTaskIds = foundUser.tasksCompleted.map(task => task.taskId);
         setTasks(tasks.map(task => ({
           ...task,
-          completed: foundUser.tasksCompleted.includes(task.id)
+          completed: completedTaskIds.includes(task.id)
         })));
+        
+        toast.success("Wallet connected successfully!");
       } else {
         // Create new user if not found
         const newReferralCode = `BORK${Math.floor(Math.random() * 10000)}`;
@@ -173,11 +252,13 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           joinedAt: new Date().toISOString()
         };
         
-        setUsers([...users, newUser]);
+        const updatedUsers = [...users, newUser];
+        setUsers(updatedUsers);
         setReferralCode(newReferralCode);
+        localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(updatedUsers));
+        
+        toast.success("Wallet connected and account created!");
       }
-      
-      toast.success("Wallet connected successfully!");
     } catch (error) {
       console.error("Error connecting to MetaMask:", error);
       toast.error("Failed to connect wallet. Please try again.");
@@ -205,31 +286,57 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const task = tasks.find(t => t.id === taskId);
     if (!task || task.completed) return;
     
+    const currentUser = users.find(u => u.address.toLowerCase() === account.toLowerCase());
+    if (!currentUser) return;
+    
+    // Check if the task is already completed
+    const alreadyCompleted = currentUser.tasksCompleted.some(t => t.taskId === taskId);
+    if (alreadyCompleted) {
+      toast.error("You have already completed this task!");
+      return;
+    }
+    
     // Update tasks
-    setTasks(tasks.map(t => (
+    const updatedTasks = tasks.map(t => (
       t.id === taskId ? { ...t, completed: true } : t
-    )));
+    ));
+    setTasks(updatedTasks);
+    localStorage.setItem(LOCAL_STORAGE_TASKS_KEY, JSON.stringify(updatedTasks));
     
     // Update user balance
-    setBalance(prevBalance => prevBalance + task.reward);
+    const newBalance = currentUser.balance + task.reward;
+    setBalance(newBalance);
     
     // Update users array
-    setUsers(users.map(user => {
+    const timestamp = new Date().toISOString();
+    const updatedUsers = users.map(user => {
       if (user.address.toLowerCase() === account.toLowerCase()) {
         return {
           ...user,
-          balance: user.balance + task.reward,
-          tasksCompleted: [...user.tasksCompleted, taskId]
+          balance: newBalance,
+          tasksCompleted: [...user.tasksCompleted, { taskId, completedAt: timestamp }]
         };
       }
       return user;
-    }));
+    });
+    
+    setUsers(updatedUsers);
+    localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(updatedUsers));
     
     toast.success(`Task completed! +${task.reward} $BORK`);
+    
+    // If the task has a destination URL, open it
+    if (task.destinationUrl) {
+      window.open(task.destinationUrl, '_blank');
+    }
+  };
+
+  const getReferralLink = () => {
+    return `https://theborkchain.lovable.app/?ref=${account}`;
   };
 
   const copyReferralLink = () => {
-    const referralLink = `https://borkchain.io/ref/${referralCode}`;
+    const referralLink = getReferralLink();
     navigator.clipboard.writeText(referralLink);
     toast.success("Referral link copied to clipboard!");
   };
@@ -282,7 +389,8 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     connectWallet,
     disconnectWallet,
     completeTask,
-    copyReferralLink
+    copyReferralLink,
+    getReferralLink
   };
 
   return (

@@ -13,6 +13,8 @@ import HomePage from "@/pages/HomePage";
 import TasksPage from "@/pages/TasksPage";
 import ReferralsPage from "@/pages/ReferralsPage";
 import AdminPage from "@/pages/AdminPage";
+import AdminLoginPage from "@/pages/AdminLoginPage";
+import Index from "@/pages/Index";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,9 +31,11 @@ const App = () => (
             <main className="flex-grow">
               <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/index" element={<Index />} />
                 <Route path="/tasks" element={<TasksPage />} />
                 <Route path="/referrals" element={<ReferralsPage />} />
                 <Route path="/admin" element={<AdminPage />} />
+                <Route path="/admin/login" element={<AdminLoginPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -1,17 +1,25 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useBork } from '@/context/BorkContext';
 import BorkDog from '@/components/BorkDog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Copy, Link2 } from 'lucide-react';
 
 const ReferralsPage = () => {
-  const { connected, connectWallet, referralCode, copyReferralLink, referrals, users } = useBork();
+  const { connected, connectWallet, referralCode, copyReferralLink, referrals, users, account, getReferralLink } = useBork();
   const [copied, setCopied] = useState(false);
   
-  const referralLink = `https://borkchain.io/ref/${referralCode}`;
+  // If not connected, redirect to home
+  if (!connected) {
+    return <Navigate to="/" replace />;
+  }
+  
+  const referralLink = getReferralLink();
   
   const handleCopyLink = () => {
     copyReferralLink();
@@ -19,11 +27,13 @@ const ReferralsPage = () => {
     setTimeout(() => setCopied(false), 2000);
   };
   
-  const referralUsers = users.filter(user => 
-    referrals.includes(user.address) || user.referredBy === referralCode
+  // Find all users referred by the current user
+  const referredUsers = users.filter(user => 
+    user.referredBy === account
   );
   
-  const totalReferralEarnings = referralUsers.length * 100; // Placeholder 100 BORK per referral
+  // Calculate total referral earnings (100 BORK per referral)
+  const totalReferralEarnings = referredUsers.length * 100;
 
   return (
     <div className="min-h-screen pt-24 pb-16">
@@ -35,130 +45,178 @@ const ReferralsPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Side */}
           <div className="lg:col-span-1">
-            <Card className="bork-card mb-6">
+            <Card className="bork-card mb-6 border-bork-green/30 bg-black/50 backdrop-blur-md shadow-[0_0_15px_rgba(57,255,20,0.15)]">
               <div className="flex justify-center mb-4">
                 <BorkDog size="small" />
               </div>
               
               <h2 className="text-xl font-bold mb-6 text-center">Your Referral Link</h2>
               
-              {connected ? (
-                <>
-                  <div className="mb-4">
-                    <div className="text-sm text-gray-400 mb-2">Share this link with friends:</div>
-                    <div className="flex gap-2">
-                      <Input 
-                        value={referralLink}
-                        readOnly
-                        className="bork-input"
-                      />
-                      <Button 
-                        onClick={handleCopyLink} 
-                        className={`bork-button whitespace-nowrap ${copied ? 'bg-green-600' : ''}`}
-                      >
-                        {copied ? 'Copied!' : 'Copy'}
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="border-t border-white/10 pt-4 mt-4">
-                    <div className="text-sm text-gray-400 mb-2">Or share your code:</div>
-                    <div className="bg-black/50 border border-bork-green/30 rounded-md px-4 py-3 text-center">
-                      <span className="text-xl font-bold text-bork-green">{referralCode}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6">
-                    <div className="text-sm text-gray-400 mb-1">How it works:</div>
-                    <ul className="text-sm text-gray-300 space-y-2">
-                      <li className="flex gap-2">
-                        <span className="text-bork-green">1.</span>
-                        <span>Share your referral link with friends</span>
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="text-bork-green">2.</span>
-                        <span>When they join BorkChain, they'll be linked to you</span>
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="text-bork-green">3.</span>
-                        <span>You'll earn 100 $BORK for each verified referral</span>
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="text-bork-green">4.</span>
-                        <span>Your friends also get a 50 $BORK welcome bonus!</span>
-                      </li>
-                    </ul>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center">
-                  <p className="text-gray-400 mb-4">Connect your wallet to get your referral link and start earning rewards.</p>
-                  <Button onClick={connectWallet} className="bork-button">
-                    Connect Wallet
-                  </Button>
+              <div className="mb-4">
+                <div className="text-sm text-gray-400 mb-2">Share this link with friends:</div>
+                <div className="flex gap-2">
+                  <Input 
+                    value={referralLink}
+                    readOnly
+                    className="bork-input bg-black/70 border-bork-green/30"
+                  />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          onClick={handleCopyLink} 
+                          className={`bork-button whitespace-nowrap ${copied ? 'bg-green-600' : ''}`}
+                        >
+                          {copied ? (
+                            'Copied!'
+                          ) : (
+                            <>
+                              <Copy size={16} className="mr-2" />
+                              Copy
+                            </>
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{copied ? 'Copied to clipboard!' : 'Copy referral link'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
-              )}
+              </div>
+              
+              <div className="border-t border-white/10 pt-4 mt-4">
+                <div className="text-sm text-gray-400 mb-2">Or share your wallet address:</div>
+                <div className="bg-black/80 border border-bork-green/30 rounded-md px-4 py-3 text-center">
+                  <span className="text-md font-bold text-bork-green break-all">{account}</span>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <div className="text-sm text-gray-400 mb-1">How it works:</div>
+                <ul className="text-sm text-gray-300 space-y-2">
+                  <li className="flex gap-2">
+                    <span className="text-bork-green">1.</span>
+                    <span>Share your referral link with friends</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-bork-green">2.</span>
+                    <span>When they join BorkChain, they'll be linked to you</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-bork-green">3.</span>
+                    <span>You'll earn 100 $BORK for each verified referral</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-bork-green">4.</span>
+                    <span>Your friends also get a 50 $BORK welcome bonus!</span>
+                  </li>
+                </ul>
+              </div>
             </Card>
             
-            <Card className="bork-card">
+            <Card className="bork-card border-bork-green/30 bg-black/50 backdrop-blur-md shadow-[0_0_15px_rgba(57,255,20,0.15)]">
               <h3 className="text-lg font-bold mb-4">Referral Stats</h3>
               
-              {connected ? (
-                <div className="space-y-4">
-                  <div className="bg-black/50 rounded-lg p-4 border border-bork-green/30">
-                    <div className="text-sm text-gray-400">Total Referrals</div>
-                    <div className="text-2xl font-bold text-bork-green">{referralUsers.length}</div>
-                  </div>
-                  
-                  <div className="bg-black/50 rounded-lg p-4 border border-white/10">
-                    <div className="text-sm text-gray-400">Total Earnings</div>
-                    <div className="text-2xl font-bold text-white">{totalReferralEarnings} $BORK</div>
-                  </div>
+              <div className="space-y-4">
+                <div className="bg-black/60 rounded-lg p-4 border border-bork-green/30">
+                  <div className="text-sm text-gray-400">Total Referrals</div>
+                  <div className="text-2xl font-bold text-bork-green neon-text">{referredUsers.length}</div>
                 </div>
-              ) : (
-                <p className="text-gray-400">Connect your wallet to view your referral stats.</p>
-              )}
+                
+                <div className="bg-black/60 rounded-lg p-4 border border-bork-green/30">
+                  <div className="text-sm text-gray-400">Total Earnings</div>
+                  <div className="text-2xl font-bold text-white">{totalReferralEarnings} $BORK</div>
+                </div>
+              </div>
             </Card>
           </div>
           
           {/* Right Side */}
           <div className="lg:col-span-2">
-            <Card className="bork-card mb-8">
+            <Card className="bork-card mb-8 border-bork-green/30 bg-black/50 backdrop-blur-md shadow-[0_0_15px_rgba(57,255,20,0.15)]">
               <h2 className="text-xl font-bold mb-6">Referral Leaderboard</h2>
               
-              {connected ? (
-                <div className="overflow-hidden rounded-lg border border-white/10">
-                  <table className="min-w-full divide-y divide-white/10">
-                    <thead className="bg-black/50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Rank</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">User</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Referrals</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Earnings</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-black/30 divide-y divide-white/10">
-                      {[
-                        { rank: 1, address: '0x3a1...2e8f', referrals: 28, earnings: 2800 },
-                        { rank: 2, address: '0x45b...a731', referrals: 21, earnings: 2100 },
-                        { rank: 3, address: '0x78c...de22', referrals: 17, earnings: 1700 },
-                        { rank: 4, address: '0x92f...1cbd', referrals: 14, earnings: 1400 },
-                        { rank: 5, address: '0x6dea...48b2', referrals: 12, earnings: 1200 },
-                      ].map((entry) => (
-                        <tr key={entry.rank}>
+              <div className="overflow-hidden rounded-lg border border-white/10">
+                <table className="min-w-full divide-y divide-white/10">
+                  <thead className="bg-black/60">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Rank</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">User</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Referrals</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Earnings</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-black/40 divide-y divide-white/10">
+                    {users
+                      .map(user => ({
+                        ...user,
+                        referralCount: users.filter(u => u.referredBy === user.address).length
+                      }))
+                      .filter(user => user.referralCount > 0)
+                      .sort((a, b) => b.referralCount - a.referralCount)
+                      .slice(0, 10)
+                      .map((user, index) => (
+                        <tr key={user.id}>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className={`text-lg font-bold ${entry.rank <= 3 ? 'text-bork-green' : 'text-white'}`}>
-                              #{entry.rank}
+                            <div className={`text-lg font-bold ${index < 3 ? 'text-bork-green' : 'text-white'}`}>
+                              #{index + 1}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-300">{entry.address}</div>
+                            <div className="text-sm text-gray-300">
+                              {user.address === account ? `${user.address} (You)` : user.address}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-white">{entry.referrals}</div>
+                            <div className="text-sm font-medium text-white">{user.referralCount}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-bold text-bork-green">{entry.earnings} $BORK</div>
+                            <div className="text-sm font-bold text-bork-green">{user.referralCount * 100} $BORK</div>
+                          </td>
+                        </tr>
+                      ))}
+                    
+                    {users.filter(user => users.some(u => u.referredBy === user.address)).length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
+                          No referrals yet. Be the first on the leaderboard!
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+            
+            <Card className="bork-card border-bork-green/30 bg-black/50 backdrop-blur-md shadow-[0_0_15px_rgba(57,255,20,0.15)]">
+              <h2 className="text-xl font-bold mb-6">Your Referrals</h2>
+              
+              {referredUsers.length > 0 ? (
+                <div className="overflow-hidden rounded-lg border border-white/10">
+                  <table className="min-w-full divide-y divide-white/10">
+                    <thead className="bg-black/60">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">User</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Joined</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Tasks</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Reward</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-black/40 divide-y divide-white/10">
+                      {referredUsers.map((user) => (
+                        <tr key={user.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-300">{user.address}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-300">{new Date(user.joinedAt).toLocaleDateString()}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-white">{user.tasksCompleted.length}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-bold text-bork-green">100 $BORK</div>
                           </td>
                         </tr>
                       ))}
@@ -166,59 +224,32 @@ const ReferralsPage = () => {
                   </table>
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-400 mb-4">Connect your wallet to view the referral leaderboard.</p>
-                  <Button onClick={connectWallet} className="bork-button">
-                    Connect Wallet
-                  </Button>
+                <div className="text-center py-8 border border-white/10 rounded-lg bg-black/30">
+                  <BorkDog size="small" className="mx-auto mb-4" />
+                  <p className="text-gray-400">You don't have any referrals yet.</p>
+                  <p className="text-gray-400 mt-2">Share your referral link to start earning!</p>
+                  
+                  <div className="flex justify-center mt-6">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            onClick={handleCopyLink} 
+                            className="bork-button"
+                          >
+                            <Link2 size={16} className="mr-2" />
+                            Copy Referral Link
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{copied ? 'Copied to clipboard!' : 'Copy referral link'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </div>
               )}
             </Card>
-            
-            {connected && (
-              <Card className="bork-card">
-                <h2 className="text-xl font-bold mb-6">Your Referrals</h2>
-                
-                {referralUsers.length > 0 ? (
-                  <div className="overflow-hidden rounded-lg border border-white/10">
-                    <table className="min-w-full divide-y divide-white/10">
-                      <thead className="bg-black/50">
-                        <tr>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">User</th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Joined</th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Tasks</th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">Reward</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-black/30 divide-y divide-white/10">
-                        {referralUsers.map((user) => (
-                          <tr key={user.id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-300">{user.address}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-300">{new Date(user.joinedAt).toLocaleDateString()}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-white">{user.tasksCompleted.length}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-bold text-bork-green">100 $BORK</div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 border border-white/10 rounded-lg">
-                    <BorkDog size="small" className="mx-auto mb-4" />
-                    <p className="text-gray-400">You don't have any referrals yet.</p>
-                    <p className="text-gray-400 mt-2">Share your referral link to start earning!</p>
-                  </div>
-                )}
-              </Card>
-            )}
           </div>
         </div>
       </div>

@@ -60,7 +60,7 @@ const TasksPage = () => {
   if (!connected) {
     return (
       <div className="min-h-screen pt-24 pb-16 flex items-center justify-center">
-        <div className="bork-card max-w-md mx-auto text-center px-8 py-12">
+        <div className="bork-card max-w-md mx-auto text-center px-8 py-12 border-bork-green/30 bg-black/70 backdrop-blur-md shadow-[0_0_15px_rgba(57,255,20,0.15)]">
           <div className="flex justify-center mb-6">
             <BorkDog size="medium" />
           </div>
@@ -80,7 +80,7 @@ const TasksPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bork-card mb-6 sticky top-24">
+            <div className="bork-card mb-6 sticky top-24 border-bork-green/30 bg-black/70 backdrop-blur-md shadow-[0_0_15px_rgba(57,255,20,0.15)]">
               <div className="flex justify-center mb-4">
                 <BorkDog size="small" />
               </div>
@@ -158,47 +158,187 @@ const TasksPage = () => {
                 <TabsTrigger value="one-time" className="data-[state=active]:bg-bork-green data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(57,255,20,0.5)]">One-time</TabsTrigger>
               </TabsList>
               
-              <div className="mt-6 space-y-4">
-                {filteredTasks.map(task => (
-                  <Card 
-                    key={task.id} 
-                    className={`bork-card transition-all bg-black/70 backdrop-blur-lg border-bork-green/40 hover:border-bork-green/80 hover:shadow-[0_0_15px_rgba(57,255,20,0.3)] ${task.completed ? 'opacity-70' : 'hover:scale-[1.02]'}`}
-                  >
-                    <div className="flex flex-col sm:flex-row justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          <Badge className={getDifficultyColor(task.difficulty)}>{task.difficulty}</Badge>
-                          <Badge className={getTypeColor(task.type)}>{task.type}</Badge>
+              <TabsContent value="all">
+                <div className="mt-6 space-y-4">
+                  {filteredTasks.map(task => (
+                    <Card 
+                      key={task.id} 
+                      className={`bork-card transition-all bg-black/70 backdrop-blur-lg border-bork-green/40 hover:border-bork-green/80 hover:shadow-[0_0_15px_rgba(57,255,20,0.3)] ${task.completed ? 'opacity-70' : 'hover:scale-[1.02]'}`}
+                    >
+                      <div className="flex flex-col sm:flex-row justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <Badge className={getDifficultyColor(task.difficulty)}>{task.difficulty}</Badge>
+                            <Badge className={getTypeColor(task.type)}>{task.type}</Badge>
+                          </div>
+                          
+                          <h3 className="text-lg font-bold mb-1">{task.title}</h3>
+                          <p className="text-gray-400 mb-4">{task.description}</p>
                         </div>
                         
-                        <h3 className="text-lg font-bold mb-1">{task.title}</h3>
-                        <p className="text-gray-400 mb-4">{task.description}</p>
-                      </div>
-                      
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="bg-black/60 backdrop-blur-md rounded-lg border border-bork-green/40 px-4 py-2 mb-3 text-center">
-                          <div className="text-sm text-gray-400">Reward</div>
-                          <div className="text-xl font-bold text-bork-green neon-text">{task.reward} $BORK</div>
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="bg-black/60 backdrop-blur-md rounded-lg border border-bork-green/40 px-4 py-2 mb-3 text-center">
+                            <div className="text-sm text-gray-400">Reward</div>
+                            <div className="text-xl font-bold text-bork-green neon-text">{task.reward} $BORK</div>
+                          </div>
+                          
+                          <Button 
+                            className={`${task.completed ? 'bg-gray-600 cursor-not-allowed' : 'bork-button shadow-[0_0_10px_rgba(57,255,20,0.3)]'} w-full`}
+                            onClick={() => handleCompleteTask(task.id)}
+                            disabled={task.completed}
+                          >
+                            {task.completed ? 'Completed ✓' : 'Complete Task'}
+                          </Button>
                         </div>
-                        
-                        <Button 
-                          className={`${task.completed ? 'bg-gray-600 cursor-not-allowed' : 'bork-button shadow-[0_0_10px_rgba(57,255,20,0.3)]'} w-full`}
-                          onClick={() => handleCompleteTask(task.id)}
-                          disabled={task.completed}
-                        >
-                          {task.completed ? 'Completed ✓' : 'Complete Task'}
-                        </Button>
                       </div>
+                    </Card>
+                  ))}
+                  
+                  {filteredTasks.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-400">No tasks found matching your filter.</p>
                     </div>
-                  </Card>
-                ))}
-                
-                {filteredTasks.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-400">No tasks found matching your filter.</p>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="daily">
+                <div className="mt-6 space-y-4">
+                  {filteredTasks
+                    .filter(task => task.type === 'daily')
+                    .map(task => (
+                    <Card 
+                      key={task.id} 
+                      className={`bork-card transition-all bg-black/70 backdrop-blur-lg border-bork-green/40 hover:border-bork-green/80 hover:shadow-[0_0_15px_rgba(57,255,20,0.3)] ${task.completed ? 'opacity-70' : 'hover:scale-[1.02]'}`}
+                    >
+                      <div className="flex flex-col sm:flex-row justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <Badge className={getDifficultyColor(task.difficulty)}>{task.difficulty}</Badge>
+                            <Badge className={getTypeColor(task.type)}>{task.type}</Badge>
+                          </div>
+                          
+                          <h3 className="text-lg font-bold mb-1">{task.title}</h3>
+                          <p className="text-gray-400 mb-4">{task.description}</p>
+                        </div>
+                        
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="bg-black/60 backdrop-blur-md rounded-lg border border-bork-green/40 px-4 py-2 mb-3 text-center">
+                            <div className="text-sm text-gray-400">Reward</div>
+                            <div className="text-xl font-bold text-bork-green neon-text">{task.reward} $BORK</div>
+                          </div>
+                          
+                          <Button 
+                            className={`${task.completed ? 'bg-gray-600 cursor-not-allowed' : 'bork-button shadow-[0_0_10px_rgba(57,255,20,0.3)]'} w-full`}
+                            onClick={() => handleCompleteTask(task.id)}
+                            disabled={task.completed}
+                          >
+                            {task.completed ? 'Completed ✓' : 'Complete Task'}
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                  
+                  {filteredTasks.filter(task => task.type === 'daily').length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-400">No daily tasks available.</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="weekly">
+                <div className="mt-6 space-y-4">
+                  {filteredTasks
+                    .filter(task => task.type === 'weekly')
+                    .map(task => (
+                    <Card 
+                      key={task.id} 
+                      className={`bork-card transition-all bg-black/70 backdrop-blur-lg border-bork-green/40 hover:border-bork-green/80 hover:shadow-[0_0_15px_rgba(57,255,20,0.3)] ${task.completed ? 'opacity-70' : 'hover:scale-[1.02]'}`}
+                    >
+                      <div className="flex flex-col sm:flex-row justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <Badge className={getDifficultyColor(task.difficulty)}>{task.difficulty}</Badge>
+                            <Badge className={getTypeColor(task.type)}>{task.type}</Badge>
+                          </div>
+                          
+                          <h3 className="text-lg font-bold mb-1">{task.title}</h3>
+                          <p className="text-gray-400 mb-4">{task.description}</p>
+                        </div>
+                        
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="bg-black/60 backdrop-blur-md rounded-lg border border-bork-green/40 px-4 py-2 mb-3 text-center">
+                            <div className="text-sm text-gray-400">Reward</div>
+                            <div className="text-xl font-bold text-bork-green neon-text">{task.reward} $BORK</div>
+                          </div>
+                          
+                          <Button 
+                            className={`${task.completed ? 'bg-gray-600 cursor-not-allowed' : 'bork-button shadow-[0_0_10px_rgba(57,255,20,0.3)]'} w-full`}
+                            onClick={() => handleCompleteTask(task.id)}
+                            disabled={task.completed}
+                          >
+                            {task.completed ? 'Completed ✓' : 'Complete Task'}
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                  
+                  {filteredTasks.filter(task => task.type === 'weekly').length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-400">No weekly tasks available.</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="one-time">
+                <div className="mt-6 space-y-4">
+                  {filteredTasks
+                    .filter(task => task.type === 'one-time')
+                    .map(task => (
+                    <Card 
+                      key={task.id} 
+                      className={`bork-card transition-all bg-black/70 backdrop-blur-lg border-bork-green/40 hover:border-bork-green/80 hover:shadow-[0_0_15px_rgba(57,255,20,0.3)] ${task.completed ? 'opacity-70' : 'hover:scale-[1.02]'}`}
+                    >
+                      <div className="flex flex-col sm:flex-row justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <Badge className={getDifficultyColor(task.difficulty)}>{task.difficulty}</Badge>
+                            <Badge className={getTypeColor(task.type)}>{task.type}</Badge>
+                          </div>
+                          
+                          <h3 className="text-lg font-bold mb-1">{task.title}</h3>
+                          <p className="text-gray-400 mb-4">{task.description}</p>
+                        </div>
+                        
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="bg-black/60 backdrop-blur-md rounded-lg border border-bork-green/40 px-4 py-2 mb-3 text-center">
+                            <div className="text-sm text-gray-400">Reward</div>
+                            <div className="text-xl font-bold text-bork-green neon-text">{task.reward} $BORK</div>
+                          </div>
+                          
+                          <Button 
+                            className={`${task.completed ? 'bg-gray-600 cursor-not-allowed' : 'bork-button shadow-[0_0_10px_rgba(57,255,20,0.3)]'} w-full`}
+                            onClick={() => handleCompleteTask(task.id)}
+                            disabled={task.completed}
+                          >
+                            {task.completed ? 'Completed ✓' : 'Complete Task'}
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                  
+                  {filteredTasks.filter(task => task.type === 'one-time').length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-400">No one-time tasks available.</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
             </Tabs>
           </div>
         </div>
