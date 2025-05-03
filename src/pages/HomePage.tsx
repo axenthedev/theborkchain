@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useBork } from '@/context/BorkContext';
@@ -40,11 +39,11 @@ const HomePage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
               <h1 className="text-4xl md:text-6xl font-bold mb-4">
-                Earn <span className="text-bork-green neon-text animate-pulse-green">$BORK</span> by completing tasks on Layer 2
+                The <span className="text-bork-green neon-text animate-pulse-green">$BORK</span> revolution starts on Layer 2
               </h1>
               
               <p className="text-gray-300 text-lg mb-8">
-                BorkChain is the first memecoin-powered task platform. Complete missions, refer friends, and build your $BORK treasure.
+                Join the pack and earn $BORK by completing missions and referring friends. The first memecoin that rewards your participation.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
@@ -70,16 +69,6 @@ const HomePage = () => {
                 <div className="bg-black/50 rounded-lg border border-white/10 px-4 py-2 flex items-center">
                   <div className="w-3 h-3 bg-bork-green rounded-full mr-2 animate-pulse"></div>
                   <span>Users: 7,821</span>
-                </div>
-                
-                <div className="bg-black/50 rounded-lg border border-white/10 px-4 py-2 flex items-center">
-                  <div className="w-3 h-3 bg-bork-green rounded-full mr-2 animate-pulse"></div>
-                  <span>Tasks: 25+</span>
-                </div>
-                
-                <div className="bg-black/50 rounded-lg border border-white/10 px-4 py-2 flex items-center">
-                  <div className="w-3 h-3 bg-bork-green rounded-full mr-2 animate-pulse"></div>
-                  <span>$BORK Distributed: 1,250,000</span>
                 </div>
               </div>
             </div>
