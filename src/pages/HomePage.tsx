@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useBork } from '@/context/BorkContext';
@@ -38,12 +39,20 @@ const HomePage = () => {
         <div className="container mx-auto px-4 relative z-10 pt-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
-              <h1 className="text-4xl md:text-6xl font-bold mb-4">
-                The <span className="text-bork-green neon-text animate-pulse-green">$BORK</span> revolution starts on Layer 2
+              <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
+                The <span className="text-bork-green neon-text animate-pulse-green">$BORK</span> 
+                <br className="hidden md:block" /> 
+                revolution 
+                <br className="hidden md:block" />
+                starts on 
+                <br className="hidden md:block" />
+                <span className="text-bork-green neon-text"> Layer 2</span>
               </h1>
               
-              <p className="text-gray-300 text-lg mb-8">
-                Join the pack and earn $BORK by completing missions and referring friends. The first memecoin that rewards your participation.
+              <p className="text-gray-300 text-xl mb-10 max-w-lg">
+                <span className="text-white font-semibold">Join the pack</span> and earn $BORK by completing missions 
+                <span className="block mt-2">and referring friends.</span>
+                <span className="block mt-2 text-bork-green font-bold">The first memecoin that rewards YOUR participation.</span>
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
