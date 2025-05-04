@@ -55,7 +55,7 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section - Improved Layout */}
+      {/* Hero Section - Improved Layout and Responsiveness */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-black">
         <div 
           ref={heroRef}
@@ -67,8 +67,8 @@ const HomePage = () => {
         
         <div className="container mx-auto px-4 relative z-10 pt-16 md:pt-0">
           <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-8 md:gap-4">
-            <div className="w-full md:w-1/2 text-center md:text-left">
-              <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight tracking-tight">
+            <div className="w-full md:w-3/5 lg:w-3/5 text-center md:text-left max-w-xs sm:max-w-sm md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto md:mx-0">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold mb-4 sm:mb-6 leading-tight tracking-tight">
                 The <span className="text-bork-green neon-text">$BORK</span> 
                 <br className="hidden md:block" /> 
                 revolution 
@@ -76,16 +76,16 @@ const HomePage = () => {
                 starts <span className="text-bork-green neon-text">now</span>
               </h1>
               
-              <p className="text-gray-300 text-lg mb-8 md:max-w-xl leading-relaxed">
+              <p className="text-gray-300 text-sm sm:text-base md:text-lg mb-4 sm:mb-6 md:mb-8 leading-relaxed md:max-w-xl lg:max-w-2xl">
                 <span className="text-white font-semibold">Join the pack</span> and earn $BORK coin by completing missions 
                 <span className="block mt-1 mb-2">and referring friends to BorkChain.</span>
-                <span className="block text-bork-green font-bold text-xl">The first memecoin that rewards YOUR participation.</span>
+                <span className="block text-bork-green font-bold text-lg sm:text-xl">The first memecoin that rewards YOUR participation.</span>
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                 <Button 
                   onClick={connectWallet} 
-                  className="bork-button text-lg px-8 py-6 h-auto relative overflow-hidden group"
+                  className="bork-button text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 h-auto relative overflow-hidden group"
                   disabled={connected}
                 >
                   <span className="relative z-10">
@@ -97,7 +97,7 @@ const HomePage = () => {
                 <Link to="/tasks" className="w-full sm:w-auto">
                   <Button 
                     variant="outline" 
-                    className="border-2 border-bork-green text-bork-green hover:bg-bork-green hover:text-black transition-all duration-300 text-lg px-8 py-6 h-auto w-full sm:w-auto group"
+                    className="border-2 border-bork-green text-bork-green hover:bg-bork-green hover:text-black transition-all duration-300 text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 h-auto w-full sm:w-auto group"
                   >
                     <span>View Tasks</span>
                     <ArrowRight className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />
@@ -105,27 +105,27 @@ const HomePage = () => {
                 </Link>
               </div>
               
-              <div className="mt-8 flex flex-wrap gap-4 justify-center md:justify-start">
-                <div className="bg-black/70 rounded-lg border border-white/10 px-4 py-2 flex items-center backdrop-blur-md hover:border-bork-green/50 transition-all">
-                  <div className="w-3 h-3 bg-bork-green rounded-full mr-2 animate-pulse"></div>
-                  <span>Users: 7,821</span>
+              <div className="mt-6 sm:mt-8 flex flex-wrap gap-3 sm:gap-4 justify-center md:justify-start">
+                <div className="bg-black/70 rounded-lg border border-white/10 px-3 sm:px-4 py-1 sm:py-2 flex items-center backdrop-blur-md hover:border-bork-green/50 transition-all">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-bork-green rounded-full mr-1 sm:mr-2 animate-pulse"></div>
+                  <span className="text-sm sm:text-base">Users: 7,821</span>
                 </div>
                 {connected && (
-                  <div className="bg-black/70 rounded-lg border border-white/10 px-4 py-2 flex items-center backdrop-blur-md hover:border-bork-green/50 transition-all">
-                    <div className="w-3 h-3 bg-bork-green rounded-full mr-2 animate-pulse"></div>
-                    <span>{balance} $BORK</span>
+                  <div className="bg-black/70 rounded-lg border border-white/10 px-3 sm:px-4 py-1 sm:py-2 flex items-center backdrop-blur-md hover:border-bork-green/50 transition-all">
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 bg-bork-green rounded-full mr-1 sm:mr-2 animate-pulse"></div>
+                    <span className="text-sm sm:text-base">{balance} $BORK</span>
                   </div>
                 )}
               </div>
             </div>
             
             {/* Larger, more prominent mascot */}
-            <div className="w-full md:w-1/2 flex justify-center md:justify-end">
+            <div className="w-full md:w-2/5 lg:w-2/5 flex justify-center md:justify-end">
               <div className="relative">
                 <div className="absolute -inset-4 bg-bork-green/20 rounded-full blur-3xl animate-pulse opacity-70"></div>
                 <BorkDog 
                   size="large" 
-                  className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 filter drop-shadow-[0_0_30px_rgba(57,255,20,0.5)] animate-bounce-small" 
+                  className="w-48 h-48 sm:w-56 sm:h-56 md:w-72 md:h-72 lg:w-80 lg:h-80 xl:w-96 xl:h-96 filter drop-shadow-[0_0_30px_rgba(57,255,20,0.5)] animate-bounce-small" 
                 />
               </div>
             </div>
@@ -134,7 +134,7 @@ const HomePage = () => {
         
         <div className="absolute bottom-8 left-0 right-0 flex justify-center">
           <div className="animate-bounce cursor-pointer" onClick={() => document.getElementById('roadmap')?.scrollIntoView({ behavior: 'smooth' })}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-bork-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-8 sm:w-8 text-bork-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
           </div>
