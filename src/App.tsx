@@ -14,6 +14,7 @@ import TasksPage from "@/pages/TasksPage";
 import ReferralsPage from "@/pages/ReferralsPage";
 import AdminPage from "@/pages/AdminPage";
 import AdminLoginPage from "@/pages/AdminLoginPage";
+import CoinomicsPage from "@/pages/CoinomicsPage";
 import Index from "@/pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => (
                 <Route path="/index" element={<Index />} />
                 <Route path="/tasks" element={<TasksPage />} />
                 <Route path="/referrals" element={<ReferralsPage />} />
+                <Route path="/coinomics" element={<CoinomicsPage />} />
                 <Route path="/admin" element={<AdminPage />} />
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

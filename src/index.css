@@ -109,14 +109,28 @@
   }
   
   .bork-button {
-    @apply bg-bork-green text-black font-bold py-2 px-4 rounded-md transition-all transform hover:scale-105 hover:brightness-110 active:scale-95;
+    @apply bg-bork-green text-black font-bold py-2 px-4 rounded-md transition-all transform hover:scale-105 hover:brightness-110 active:scale-95 shadow-[0_0_15px_rgba(57,255,20,0.5)];
   }
 
   .bork-card {
-    @apply glassmorphism rounded-xl p-6 border border-bork-green/30 transition-all duration-300 hover:border-bork-green/80;
+    @apply glassmorphism rounded-xl p-6 border border-bork-green/30 transition-all duration-300 hover:border-bork-green/80 hover:shadow-[0_0_15px_rgba(57,255,20,0.2)];
   }
   
   .bork-input {
     @apply bg-black/50 border-2 border-bork-green/50 rounded-md px-4 py-2 outline-none focus:border-bork-green focus:ring-1 focus:ring-bork-green text-white;
+  }
+
+  /* Enhanced hover effects */
+  .hover-glow {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-glow:hover {
+    filter: drop-shadow(0 0 10px rgba(57, 255, 20, 0.5));
+  }
+
+  /* Smooth scrolling for anchor links */
+  html {
+    scroll-behavior: smooth;
   }
 }

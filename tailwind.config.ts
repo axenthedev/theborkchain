@@ -106,7 +106,17 @@ export default {
 				'glow': {
 					'0%, 100%': { filter: 'brightness(100%)' },
 					'50%': { filter: 'brightness(150%)' },
-				}
+				},
+				'fade-in': {
+					'0%': { 
+						opacity: '0',
+						transform: 'translateY(20px)'
+					},
+					'100%': { 
+						opacity: '1',
+						transform: 'translateY(0)'
+					},
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
@@ -114,7 +124,8 @@ export default {
 				'float': 'float 3s ease-in-out infinite',
 				'pulse-green': 'pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
 				'bounce-small': 'bounce-small 2s ease-in-out infinite',
-				'glow': 'glow 2s ease-in-out infinite'
+				'glow': 'glow 2s ease-in-out infinite',
+				'fade-in': 'fade-in 0.8s ease-out forwards',
 			},
 			fontFamily: {
 				'bork': ['Montserrat', 'sans-serif'],

@@ -19,18 +19,17 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 
 // Type augmentation for the RPC functions that aren't in the auto-generated types
 declare module '@supabase/supabase-js' {
-  interface SupabaseClient<T> {
+  interface SupabaseClient<Database = any> {
     rpc<
       FunctionName extends 'add_task_reward' | 'add_referral_bonus' | 'create_admin_user',
       Args extends
         FunctionName extends 'add_task_reward' ? { user_addr: string; task_id: string } :
         FunctionName extends 'add_referral_bonus' ? { referrer_addr: string; bonus_amount: number } :
-        Record<PropertyKey, never>,
-      ReturnType = void
+        Record<PropertyKey, never>
     >(
       functionName: FunctionName,
       args: Args,
       options?: { count?: 'exact' | 'planned' | 'estimated' }
-    ): import('@supabase/supabase-js').SupabasePromise<{ data: ReturnType; error: Error | null }>;
+    ): Promise<{ data: any; error: Error | null }>;
   }
 }
