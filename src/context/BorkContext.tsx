@@ -227,13 +227,17 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           referred_address: address
         });
         
-        // Update referrer's balance
-        await supabase.rpc('add_referral_bonus', { 
+        // Update referrer's balance using the RPC function
+        const { error } = await supabase.rpc('add_referral_bonus', { 
           referrer_addr: referrerAddress,
           bonus_amount: 100
         });
         
-        toast.success(`You've been referred by ${referrerAddress}`);
+        if (error) {
+          console.error('Error adding referral bonus:', error);
+        } else {
+          toast.success(`You've been referred by ${referrerAddress}`);
+        }
       }
       
       setReferralCode(newReferralCode);
@@ -316,7 +320,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
       
-      // Update user balance
+      // Update user balance using the RPC function
       const { error: balanceUpdateError } = await supabase
         .rpc('add_task_reward', {
           user_addr: account,

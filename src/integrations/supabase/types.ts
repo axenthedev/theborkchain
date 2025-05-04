@@ -166,6 +166,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_referral_bonus: {
+        Args: { referrer_addr: string; bonus_amount: number }
+        Returns: undefined
+      }
+      add_task_reward: {
+        Args: { user_addr: string; task_id: string }
+        Returns: undefined
+      }
       create_admin_user: {
         Args: Record<PropertyKey, never>
         Returns: undefined
