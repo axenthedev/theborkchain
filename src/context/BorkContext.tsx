@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -228,10 +227,13 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         
         // Update referrer's balance using the RPC function
-        const { error } = await supabase.rpc('add_referral_bonus', { 
-          referrer_addr: referrerAddress,
-          bonus_amount: 100
-        });
+        const { error } = await supabase.rpc(
+          'add_referral_bonus', 
+          { 
+            referrer_addr: referrerAddress,
+            bonus_amount: 100
+          }
+        );
         
         if (error) {
           console.error('Error adding referral bonus:', error);
@@ -322,10 +324,13 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Update user balance using the RPC function
       const { error: balanceUpdateError } = await supabase
-        .rpc('add_task_reward', {
-          user_addr: account,
-          task_id: taskId
-        });
+        .rpc(
+          'add_task_reward',
+          {
+            user_addr: account,
+            task_id: taskId
+          }
+        );
         
       if (balanceUpdateError) {
         console.error("Error updating balance:", balanceUpdateError);
