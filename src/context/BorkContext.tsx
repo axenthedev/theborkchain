@@ -1,6 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
 
 export interface Task {
   id: string;
@@ -10,7 +12,7 @@ export interface Task {
   completed: boolean;
   difficulty: 'easy' | 'medium' | 'hard';
   type: 'daily' | 'weekly' | 'one-time';
-  destinationUrl?: string; // Added destination URL
+  destinationUrl?: string;
 }
 
 export interface User {
@@ -47,91 +49,6 @@ interface BorkContextType {
 
 const BorkContext = createContext<BorkContextType | undefined>(undefined);
 
-// Mock tasks data
-const mockTasks: Task[] = [
-  {
-    id: '1',
-    title: 'Follow BorkChain on Twitter',
-    description: 'Follow our official Twitter account to stay updated',
-    reward: 50,
-    completed: false,
-    difficulty: 'easy',
-    type: 'one-time',
-    destinationUrl: 'https://twitter.com/BorkChain'
-  },
-  {
-    id: '2',
-    title: 'Join Discord Community',
-    description: 'Join our vibrant Discord community and say hello',
-    reward: 75,
-    completed: false,
-    difficulty: 'easy',
-    type: 'one-time',
-    destinationUrl: 'https://discord.gg/borkchain'
-  },
-  {
-    id: '3',
-    title: 'Refer a Friend',
-    description: 'Invite a friend to join BorkChain with your referral link',
-    reward: 150,
-    completed: false,
-    difficulty: 'medium',
-    type: 'one-time'
-  },
-  {
-    id: '4',
-    title: 'Participate in AMA',
-    description: 'Join our weekly AMA session with the team',
-    reward: 100,
-    completed: false,
-    difficulty: 'medium',
-    type: 'weekly',
-    destinationUrl: 'https://discord.gg/borkchain-ama'
-  },
-  {
-    id: '5',
-    title: 'Create Meme Content',
-    description: 'Create and share a BORK-themed meme on social media',
-    reward: 200,
-    completed: false,
-    difficulty: 'hard',
-    type: 'daily',
-    destinationUrl: 'https://twitter.com/intent/tweet?hashtags=BorkChain'
-  },
-];
-
-// Mock users data
-const mockUsers: User[] = [
-  {
-    id: '1',
-    address: '0x123...456',
-    balance: 500,
-    isAdmin: true,
-    referralCode: 'BORK123',
-    referredBy: null,
-    referrals: [],
-    tasksCompleted: [
-      { taskId: '1', completedAt: new Date().toISOString() },
-      { taskId: '2', completedAt: new Date().toISOString() }
-    ],
-    joinedAt: '2023-05-01'
-  },
-  {
-    id: '2',
-    address: '0x789...012',
-    balance: 250,
-    isAdmin: false,
-    referralCode: 'BORK456',
-    referredBy: 'BORK123',
-    referrals: [],
-    tasksCompleted: [
-      { taskId: '1', completedAt: new Date().toISOString() },
-      { taskId: '2', completedAt: new Date().toISOString() }
-    ],
-    joinedAt: '2023-05-15'
-  }
-];
-
 const LOCAL_STORAGE_USERS_KEY = 'borkchain_users';
 const LOCAL_STORAGE_TASKS_KEY = 'borkchain_tasks';
 
@@ -146,64 +63,188 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [referrals, setReferrals] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Initialize data from localStorage or use mock data
-  useEffect(() => {
-    const storedUsers = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
-    const storedTasks = localStorage.getItem(LOCAL_STORAGE_TASKS_KEY);
-    
-    if (storedUsers) {
-      setUsers(JSON.parse(storedUsers));
-    } else {
-      setUsers(mockUsers);
-      localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(mockUsers));
-    }
-    
-    if (storedTasks) {
-      setTasks(JSON.parse(storedTasks));
-    } else {
-      setTasks(mockTasks);
-      localStorage.setItem(LOCAL_STORAGE_TASKS_KEY, JSON.stringify(mockTasks));
-    }
-  }, []);
+  // Fetch tasks from Supabase
+  const fetchTasks = async () => {
+    try {
+      const { data: taskData, error: taskError } = await supabase
+        .from('tasks')
+        .select('*');
 
-  // Handle referral from URL when app loads
-  useEffect(() => {
-    const handleReferral = () => {
+      if (taskError) {
+        console.error('Error fetching tasks:', taskError);
+        return;
+      }
+
+      if (account) {
+        // Fetch completed tasks for current user
+        const { data: userTasksData, error: userTasksError } = await supabase
+          .from('user_tasks')
+          .select('task_id, completed_at')
+          .eq('user_address', account);
+
+        if (userTasksError) {
+          console.error('Error fetching user tasks:', userTasksError);
+          return;
+        }
+
+        // Map completed status to tasks
+        const completedTaskIds = new Set(userTasksData?.map(ut => ut.task_id) || []);
+        
+        const mappedTasks: Task[] = taskData?.map(task => ({
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          reward: task.reward,
+          completed: completedTaskIds.has(task.id),
+          difficulty: task.difficulty as 'easy' | 'medium' | 'hard',
+          type: task.type as 'daily' | 'weekly' | 'one-time',
+          destinationUrl: task.destination_url || undefined
+        })) || [];
+
+        setTasks(mappedTasks);
+      } else {
+        // If no user connected, just set tasks without completion status
+        const mappedTasks: Task[] = taskData?.map(task => ({
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          reward: task.reward,
+          completed: false,
+          difficulty: task.difficulty as 'easy' | 'medium' | 'hard',
+          type: task.type as 'daily' | 'weekly' | 'one-time',
+          destinationUrl: task.destination_url || undefined
+        })) || [];
+
+        setTasks(mappedTasks);
+      }
+    } catch (error) {
+      console.error('Error in fetchTasks:', error);
+    }
+  };
+
+  // Fetch user data from Supabase
+  const fetchUserData = async (address: string) => {
+    try {
+      // Get user profile
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('address', address)
+        .single();
+
+      if (userError) {
+        if (userError.code === 'PGRST116') {
+          // User not found, create new user
+          return createNewUser(address);
+        }
+        console.error('Error fetching user data:', userError);
+        return;
+      }
+
+      // Get user's completed tasks
+      const { data: userTasksData, error: userTasksError } = await supabase
+        .from('user_tasks')
+        .select('task_id, completed_at')
+        .eq('user_address', address);
+
+      if (userTasksError) {
+        console.error('Error fetching user tasks:', userTasksError);
+      }
+
+      // Get user's referrals
+      const { data: referralsData, error: referralsError } = await supabase
+        .from('referrals')
+        .select('referred_address')
+        .eq('referrer_address', address);
+
+      if (referralsError) {
+        console.error('Error fetching referrals:', referralsError);
+      }
+
+      // Update state with fetched data
+      setBalance(userData.balance);
+      setReferralCode(userData.referral_code);
+      setReferrals(referralsData?.map(r => r.referred_address) || []);
+      setIsAdmin(userData.is_admin);
+      
+      // Mark tasks as completed
+      const completedTaskIds = new Set(userTasksData?.map(ut => ut.task_id) || []);
+      setTasks(prevTasks => prevTasks.map(task => ({
+        ...task,
+        completed: completedTaskIds.has(task.id)
+      })));
+
+      return userData;
+    } catch (error) {
+      console.error('Error in fetchUserData:', error);
+      return null;
+    }
+  };
+
+  // Create new user in Supabase
+  const createNewUser = async (address: string) => {
+    try {
+      const newReferralCode = `BORK${Math.floor(Math.random() * 10000)}`;
+      
+      // Check URL for referral
       const urlParams = new URLSearchParams(window.location.search);
       const refCode = urlParams.get('ref');
+      let referrerAddress: string | null = null;
       
-      if (refCode && account) {
-        // Find if this is a valid referral code
-        const referrer = users.find(user => 
-          user.address.toLowerCase() === refCode.toLowerCase() || 
-          user.referralCode.toLowerCase() === refCode.toLowerCase()
-        );
-        
-        if (referrer) {
-          const currentUser = users.find(u => u.address.toLowerCase() === account.toLowerCase());
+      if (refCode) {
+        // Check if referrer exists
+        const { data: referrerData } = await supabase
+          .from('users')
+          .select('address')
+          .or(`address.eq.${refCode},referral_code.eq.${refCode}`)
+          .single();
           
-          if (currentUser && !currentUser.referredBy && currentUser.address.toLowerCase() !== referrer.address.toLowerCase()) {
-            // Update the current user with the referral
-            const updatedUsers = users.map(u => {
-              if (u.address.toLowerCase() === account.toLowerCase()) {
-                return { ...u, referredBy: referrer.address };
-              } else if (u.address.toLowerCase() === referrer.address.toLowerCase()) {
-                return { ...u, referrals: [...u.referrals, account] };
-              }
-              return u;
-            });
-            
-            setUsers(updatedUsers);
-            localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(updatedUsers));
-            toast.success(`You've been referred by ${referrer.address}`);
-          }
+        if (referrerData) {
+          referrerAddress = referrerData.address;
         }
       }
-    };
-    
-    handleReferral();
-  }, [account, users]);
+      
+      // Insert new user
+      const { data: newUserData, error: insertError } = await supabase
+        .from('users')
+        .insert({
+          address: address,
+          referral_code: newReferralCode,
+          referred_by: referrerAddress
+        })
+        .select()
+        .single();
+        
+      if (insertError) {
+        console.error('Error creating user:', insertError);
+        return null;
+      }
+      
+      // If there's a referrer, create referral record
+      if (referrerAddress) {
+        await supabase.from('referrals').insert({
+          referrer_address: referrerAddress,
+          referred_address: address
+        });
+        
+        // Update referrer's balance
+        await supabase.rpc('add_referral_bonus', { 
+          referrer_addr: referrerAddress,
+          bonus_amount: 100
+        });
+        
+        toast.success(`You've been referred by ${referrerAddress}`);
+      }
+      
+      setReferralCode(newReferralCode);
+      return newUserData;
+    } catch (error) {
+      console.error('Error in createNewUser:', error);
+      return null;
+    }
+  };
 
+  // Connect wallet and initialize user data
   const connectWallet = async () => {
     if (!window.ethereum) {
       toast.error("MetaMask not found. Please install MetaMask first.");
@@ -220,44 +261,13 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAccount(address);
       setConnected(true);
       
-      // Find if user exists
-      const foundUser = users.find(user => user.address.toLowerCase() === address.toLowerCase());
+      // Fetch user data from Supabase or create new user
+      const userData = await fetchUserData(address);
       
-      if (foundUser) {
-        setBalance(foundUser.balance);
-        setReferralCode(foundUser.referralCode);
-        setReferrals(foundUser.referrals);
-        setIsAdmin(foundUser.isAdmin);
-        
-        // Mark completed tasks
-        const completedTaskIds = foundUser.tasksCompleted.map(task => task.taskId);
-        setTasks(tasks.map(task => ({
-          ...task,
-          completed: completedTaskIds.includes(task.id)
-        })));
-        
+      if (userData) {
         toast.success("Wallet connected successfully!");
       } else {
-        // Create new user if not found
-        const newReferralCode = `BORK${Math.floor(Math.random() * 10000)}`;
-        const newUser: User = {
-          id: `${users.length + 1}`,
-          address,
-          balance: 0,
-          isAdmin: false,
-          referralCode: newReferralCode,
-          referredBy: null,
-          referrals: [],
-          tasksCompleted: [],
-          joinedAt: new Date().toISOString()
-        };
-        
-        const updatedUsers = [...users, newUser];
-        setUsers(updatedUsers);
-        setReferralCode(newReferralCode);
-        localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(updatedUsers));
-        
-        toast.success("Wallet connected and account created!");
+        toast.error("Failed to load user data. Please try again.");
       }
     } catch (error) {
       console.error("Error connecting to MetaMask:", error);
@@ -276,58 +286,67 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsAdmin(false);
     
     // Reset tasks completion status
-    setTasks(tasks.map(task => ({ ...task, completed: false })));
+    setTasks(prevTasks => prevTasks.map(task => ({ ...task, completed: false })));
     toast.info("Wallet disconnected");
   };
 
-  const completeTask = (taskId: string) => {
+  const completeTask = async (taskId: string) => {
     if (!account) return;
     
     const task = tasks.find(t => t.id === taskId);
     if (!task || task.completed) return;
     
-    const currentUser = users.find(u => u.address.toLowerCase() === account.toLowerCase());
-    if (!currentUser) return;
-    
-    // Check if the task is already completed
-    const alreadyCompleted = currentUser.tasksCompleted.some(t => t.taskId === taskId);
-    if (alreadyCompleted) {
-      toast.error("You have already completed this task!");
-      return;
-    }
-    
-    // Update tasks
-    const updatedTasks = tasks.map(t => (
-      t.id === taskId ? { ...t, completed: true } : t
-    ));
-    setTasks(updatedTasks);
-    localStorage.setItem(LOCAL_STORAGE_TASKS_KEY, JSON.stringify(updatedTasks));
-    
-    // Update user balance
-    const newBalance = currentUser.balance + task.reward;
-    setBalance(newBalance);
-    
-    // Update users array
-    const timestamp = new Date().toISOString();
-    const updatedUsers = users.map(user => {
-      if (user.address.toLowerCase() === account.toLowerCase()) {
-        return {
-          ...user,
-          balance: newBalance,
-          tasksCompleted: [...user.tasksCompleted, { taskId, completedAt: timestamp }]
-        };
+    try {
+      // Insert record of task completion
+      const { error: taskCompletionError } = await supabase
+        .from('user_tasks')
+        .insert({
+          user_address: account,
+          task_id: taskId
+        });
+        
+      if (taskCompletionError) {
+        if (taskCompletionError.code === '23505') {
+          // Unique violation - task already completed
+          toast.error("You have already completed this task!");
+          return;
+        }
+        console.error("Error recording task completion:", taskCompletionError);
+        toast.error("Failed to complete task. Please try again.");
+        return;
       }
-      return user;
-    });
-    
-    setUsers(updatedUsers);
-    localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(updatedUsers));
-    
-    toast.success(`Task completed! +${task.reward} $BORK`);
-    
-    // If the task has a destination URL, open it
-    if (task.destinationUrl) {
-      window.open(task.destinationUrl, '_blank');
+      
+      // Update user balance
+      const { error: balanceUpdateError } = await supabase
+        .rpc('add_task_reward', {
+          user_addr: account,
+          task_id: taskId
+        });
+        
+      if (balanceUpdateError) {
+        console.error("Error updating balance:", balanceUpdateError);
+        toast.error("Failed to update balance. Please try again.");
+        return;
+      }
+      
+      // Update local state
+      setTasks(prevTasks => 
+        prevTasks.map(t => t.id === taskId ? { ...t, completed: true } : t)
+      );
+      
+      // Refresh user data to get updated balance
+      const userData = await fetchUserData(account);
+      if (userData) {
+        toast.success(`Task completed! +${task.reward} $BORK`);
+      }
+      
+      // If the task has a destination URL, open it
+      if (task.destinationUrl) {
+        window.open(task.destinationUrl, '_blank');
+      }
+    } catch (error) {
+      console.error("Error completing task:", error);
+      toast.error("Failed to complete task. Please try again.");
     }
   };
 
@@ -340,6 +359,19 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     navigator.clipboard.writeText(referralLink);
     toast.success("Referral link copied to clipboard!");
   };
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+  
+  // Fetch user data when account changes
+  useEffect(() => {
+    if (account) {
+      fetchUserData(account);
+      fetchTasks(); // Refetch tasks to get completion status
+    }
+  }, [account]);
 
   useEffect(() => {
     // Check if previously connected

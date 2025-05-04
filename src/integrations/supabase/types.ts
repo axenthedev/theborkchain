@@ -9,13 +9,167 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          referred_address: string
+          referrer_address: string
+          reward: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referred_address: string
+          referrer_address: string
+          reward?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referred_address?: string
+          referrer_address?: string
+          reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_address_fkey"
+            columns: ["referred_address"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["address"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_address_fkey"
+            columns: ["referrer_address"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["address"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          created_at: string
+          description: string
+          destination_url: string | null
+          difficulty: string
+          id: string
+          reward: number
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          destination_url?: string | null
+          difficulty: string
+          id?: string
+          reward: number
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          destination_url?: string | null
+          difficulty?: string
+          id?: string
+          reward?: number
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_tasks: {
+        Row: {
+          completed_at: string
+          id: string
+          task_id: string
+          user_address: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          task_id: string
+          user_address: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          task_id?: string
+          user_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_tasks_user_address_fkey"
+            columns: ["user_address"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["address"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          address: string
+          balance: number
+          id: string
+          is_admin: boolean
+          joined_at: string
+          referral_code: string
+          referred_by: string | null
+          total_earned: number
+        }
+        Insert: {
+          address: string
+          balance?: number
+          id?: string
+          is_admin?: boolean
+          joined_at?: string
+          referral_code: string
+          referred_by?: string | null
+          total_earned?: number
+        }
+        Update: {
+          address?: string
+          balance?: number
+          id?: string
+          is_admin?: boolean
+          joined_at?: string
+          referral_code?: string
+          referred_by?: string | null
+          total_earned?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["address"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_admin_user: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
