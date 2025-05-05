@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,7 +42,7 @@ interface BorkContextType {
   users: User[];
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
-  completeTask: (taskId: string) => void;
+  completeTask: (taskId: string) => Promise<boolean>;
   copyReferralLink: () => void;
   getReferralLink: () => string;
 }
@@ -296,13 +297,26 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.info("Wallet disconnected");
   };
 
-  const completeTask = async (taskId: string) => {
-    if (!account) return;
+  const completeTask = async (taskId: string): Promise<boolean> => {
+    if (!account) {
+      toast.error("Please connect your wallet first");
+      return false;
+    }
     
     const task = tasks.find(t => t.id === taskId);
-    if (!task || task.completed) return;
+    if (!task) {
+      toast.error("Task not found");
+      return false;
+    }
+    
+    if (task.completed) {
+      toast.info("You have already completed this task!");
+      return false;
+    }
     
     try {
+      console.log(`Attempting to complete task ${taskId} for user ${account}`);
+      
       // Insert record of task completion
       const { error: taskCompletionError } = await supabase
         .from('user_tasks')
@@ -312,31 +326,42 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         
       if (taskCompletionError) {
+        console.error("Error recording task completion:", taskCompletionError);
+        
         if (taskCompletionError.code === '23505') {
           // Unique violation - task already completed
           toast.error("You have already completed this task!");
-          return;
+          
+          // Update local state to reflect completion
+          setTasks(prevTasks => 
+            prevTasks.map(t => t.id === taskId ? { ...t, completed: true } : t)
+          );
+          
+          return false;
+        } else {
+          toast.error("Failed to complete task. Please try again.");
+          return false;
         }
-        console.error("Error recording task completion:", taskCompletionError);
-        toast.error("Failed to complete task. Please try again.");
-        return;
       }
       
+      console.log(`Task completion record inserted successfully, updating balance...`);
+      
       // Update user balance using the RPC function
-      const { error: balanceUpdateError } = await supabase
-        .rpc(
-          'add_task_reward',
-          {
-            user_addr: account,
-            task_id: taskId
-          }
-        );
+      const { data: rewardData, error: balanceUpdateError } = await supabase.rpc(
+        'add_task_reward',
+        {
+          user_addr: account,
+          task_id: taskId
+        }
+      );
         
       if (balanceUpdateError) {
         console.error("Error updating balance:", balanceUpdateError);
         toast.error("Failed to update balance. Please try again.");
-        return;
+        return false;
       }
+      
+      console.log(`Balance updated successfully, refreshing data...`);
       
       // Update local state
       setTasks(prevTasks => 
@@ -353,9 +378,12 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (task.destinationUrl) {
         window.open(task.destinationUrl, '_blank');
       }
+      
+      return true;
     } catch (error) {
       console.error("Error completing task:", error);
       toast.error("Failed to complete task. Please try again.");
+      return false;
     }
   };
 
