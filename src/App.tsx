@@ -35,7 +35,7 @@ function App() {
         <Footer />
       </Router>
       <Toaster position="top-right" richColors />
-    </BrowserProvider>
+    </BorkProvider>
   );
 }
 
