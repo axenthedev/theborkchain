@@ -6,7 +6,7 @@ import { useBork } from "@/context/BorkContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Coins, Piggybank } from "lucide-react";
+import { Coins, PiggyBank } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -227,7 +227,7 @@ const PresalePage = () => {
           <Card className="bg-black/60 border border-bork-green/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Piggybank className="h-6 w-6 text-bork-green" />
+                <PiggyBank className="h-6 w-6 text-bork-green" />
                 Make a Contribution
               </CardTitle>
               <CardDescription>
