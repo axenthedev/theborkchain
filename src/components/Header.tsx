@@ -64,10 +64,10 @@ const Header = () => {
             <Rocket className="w-4 h-4" /> Airdrop
           </Link>
           <Link 
-            to="/presale" 
-            className={`font-medium hover:text-bork-green transition-colors flex items-center gap-1 ${isActive('/presale') ? 'text-bork-green' : 'text-white'}`}
+            to="/fundraisers" 
+            className={`font-medium hover:text-bork-green transition-colors flex items-center gap-1 ${isActive('/fundraisers') ? 'text-bork-green' : 'text-white'}`}
           >
-            <Coins className="w-4 h-4" /> Presale
+            <Coins className="w-4 h-4" /> Fundraisers
           </Link>
         </nav>
         
@@ -78,7 +78,7 @@ const Header = () => {
               <div className="bg-black/30 rounded-full px-4 py-1 border border-bork-green/30">
                 <span className="font-bold text-bork-green">{balance}</span> $BORK
               </div>
-              <div className="bg-black/30 rounded-full px-4 py-1 border border-white/30">
+              <div className="bg-black/30 rounded-full px-4 py-1 border border-white/30 text-white">
                 {truncateAddress(account || '')}
               </div>
             </div>
@@ -139,11 +139,11 @@ const Header = () => {
               <Rocket className="w-5 h-5" /> Airdrop
             </Link>
             <Link 
-              to="/presale" 
-              className={`text-xl font-medium flex items-center gap-2 ${isActive('/presale') ? 'text-bork-green' : 'text-white'}`}
+              to="/fundraisers" 
+              className={`text-xl font-medium flex items-center gap-2 ${isActive('/fundraisers') ? 'text-bork-green' : 'text-white'}`}
               onClick={closeMenu}
             >
-              <Coins className="w-5 h-5" /> Presale
+              <Coins className="w-5 h-5" /> Fundraisers
             </Link>
             
             {connected && (
@@ -151,7 +151,7 @@ const Header = () => {
                 <div className="bg-black/30 rounded-full px-4 py-1 border border-bork-green/30">
                   <span className="font-bold text-bork-green">{balance}</span> $BORK
                 </div>
-                <div className="bg-black/30 rounded-full px-4 py-1 border border-white/30">
+                <div className="bg-black/30 rounded-full px-4 py-1 border border-white/30 text-white">
                   {truncateAddress(account || '')}
                 </div>
               </div>

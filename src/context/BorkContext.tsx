@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -317,6 +316,11 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log(`Attempting to complete task ${taskId} for user ${account}`);
       
+      // Update local state first for faster UI feedback
+      setTasks(prevTasks => 
+        prevTasks.map(t => t.id === taskId ? { ...t, completed: true } : t)
+      );
+      
       // Insert record of task completion
       const { error: taskCompletionError } = await supabase
         .from('user_tasks')
@@ -330,15 +334,13 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (taskCompletionError.code === '23505') {
           // Unique violation - task already completed
-          toast.error("You have already completed this task!");
-          
-          // Update local state to reflect completion
-          setTasks(prevTasks => 
-            prevTasks.map(t => t.id === taskId ? { ...t, completed: true } : t)
-          );
-          
-          return false;
+          toast.info("You've already completed this task!");
+          return true; // Return true since the task is already completed
         } else {
+          // Revert local state change on error
+          setTasks(prevTasks => 
+            prevTasks.map(t => t.id === taskId ? { ...t, completed: false } : t)
+          );
           toast.error("Failed to complete task. Please try again.");
           return false;
         }
@@ -347,7 +349,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log(`Task completion record inserted successfully, updating balance...`);
       
       // Update user balance using the RPC function
-      const { data: rewardData, error: balanceUpdateError } = await supabase.rpc(
+      const { error: balanceUpdateError } = await supabase.rpc(
         'add_task_reward',
         {
           user_addr: account,
@@ -358,15 +360,16 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (balanceUpdateError) {
         console.error("Error updating balance:", balanceUpdateError);
         toast.error("Failed to update balance. Please try again.");
+        
+        // Revert local state change on error
+        setTasks(prevTasks => 
+          prevTasks.map(t => t.id === taskId ? { ...t, completed: false } : t)
+        );
+        
         return false;
       }
       
       console.log(`Balance updated successfully, refreshing data...`);
-      
-      // Update local state
-      setTasks(prevTasks => 
-        prevTasks.map(t => t.id === taskId ? { ...t, completed: true } : t)
-      );
       
       // Refresh user data to get updated balance
       const userData = await fetchUserData(account);
@@ -383,6 +386,12 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.error("Error completing task:", error);
       toast.error("Failed to complete task. Please try again.");
+      
+      // Revert local state change on error
+      setTasks(prevTasks => 
+        prevTasks.map(t => t.id === taskId ? { ...t, completed: false } : t)
+      );
+      
       return false;
     }
   };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -182,10 +181,9 @@ const AirdropPage = () => {
       {/* Hero section */}
       <div className="text-center mb-16">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in">
-          <span className="text-white">$BORK</span> <span className="text-bork-green neon-text">Airdrop</span>
+          <span className="text-white">Anticipate the</span> <span className="text-bork-green neon-text">$BORK</span> <span className="text-white">airdrop claim</span>
         </h1>
-        <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8">
-          Participate in the $BORK token airdrop by claiming your allocation. 
+        <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8 text-white">
           Get early access by purchasing a Premier Pass for only $2 USDT.
         </p>
       </div>
@@ -204,25 +202,25 @@ const AirdropPage = () => {
                 <span className="text-2xl md:text-4xl lg:text-5xl font-bold text-bork-green neon-text">
                   {timeLeft.days}
                 </span>
-                <span className="text-xs md:text-sm mt-1">Days</span>
+                <span className="text-xs md:text-sm mt-1 text-white">Days</span>
               </div>
               <div className="flex flex-col items-center bg-black/80 p-4 rounded-lg border border-bork-green/30">
                 <span className="text-2xl md:text-4xl lg:text-5xl font-bold text-bork-green neon-text">
                   {timeLeft.hours}
                 </span>
-                <span className="text-xs md:text-sm mt-1">Hours</span>
+                <span className="text-xs md:text-sm mt-1 text-white">Hours</span>
               </div>
               <div className="flex flex-col items-center bg-black/80 p-4 rounded-lg border border-bork-green/30">
                 <span className="text-2xl md:text-4xl lg:text-5xl font-bold text-bork-green neon-text">
                   {timeLeft.minutes}
                 </span>
-                <span className="text-xs md:text-sm mt-1">Minutes</span>
+                <span className="text-xs md:text-sm mt-1 text-white">Minutes</span>
               </div>
               <div className="flex flex-col items-center bg-black/80 p-4 rounded-lg border border-bork-green/30">
                 <span className="text-2xl md:text-4xl lg:text-5xl font-bold text-bork-green neon-text">
                   {timeLeft.seconds}
                 </span>
-                <span className="text-xs md:text-sm mt-1">Seconds</span>
+                <span className="text-xs md:text-sm mt-1 text-white">Seconds</span>
               </div>
             </div>
           </CardContent>
@@ -233,7 +231,7 @@ const AirdropPage = () => {
       <div className="max-w-2xl mx-auto">
         {!connected ? (
           <div className="text-center py-8">
-            <h2 className="text-xl md:text-2xl mb-4">Connect your wallet to participate</h2>
+            <h2 className="text-xl md:text-2xl mb-4 text-white">Connect your wallet to participate</h2>
             <p className="mb-4 text-gray-400">You need to connect your wallet first to access the airdrop claim.</p>
           </div>
         ) : (
@@ -241,16 +239,16 @@ const AirdropPage = () => {
             {!hasPaid ? (
               <Card className="bg-black/60 border border-bork-green/50 mb-8">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-white">
                     <Rocket className="h-6 w-6 text-bork-green" />
                     Premier Pass
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-gray-300">
                     Purchase a Premier Pass for $2 USDT to unlock early access to the airdrop
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="mb-4">
+                  <p className="mb-4 text-white">
                     The Premier Pass gives you priority access to the $BORK token airdrop
                     and increases your chances of eligibility.
                   </p>
@@ -268,11 +266,11 @@ const AirdropPage = () => {
             ) : (
               <Card className="bg-black/60 border border-bork-green/50">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-white">
                     <Rocket className="h-6 w-6 text-bork-green" />
                     Airdrop Claim Form
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-gray-300">
                     Fill in your details to complete your airdrop claim
                   </CardDescription>
                 </CardHeader>
@@ -284,11 +282,11 @@ const AirdropPage = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email (Optional)</FormLabel>
+                            <FormLabel className="text-white">Email (Optional)</FormLabel>
                             <FormControl>
                               <Input placeholder="your@email.com" {...field} />
                             </FormControl>
-                            <FormDescription>
+                            <FormDescription className="text-gray-400">
                               We'll send you updates about the airdrop
                             </FormDescription>
                             <FormMessage />
@@ -301,7 +299,7 @@ const AirdropPage = () => {
                         name="twitter_handle"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Twitter Handle (Optional)</FormLabel>
+                            <FormLabel className="text-white">Twitter Handle (Optional)</FormLabel>
                             <FormControl>
                               <Input placeholder="@yourusername" {...field} />
                             </FormControl>
@@ -315,7 +313,7 @@ const AirdropPage = () => {
                         name="telegram_handle"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Telegram Handle (Optional)</FormLabel>
+                            <FormLabel className="text-white">Telegram Handle (Optional)</FormLabel>
                             <FormControl>
                               <Input placeholder="@yourusername" {...field} />
                             </FormControl>

@@ -1,57 +1,42 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { BorkProvider } from "@/context/BorkContext";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import HomePage from '@/pages/HomePage';
+import TasksPage from '@/pages/TasksPage';
+import ReferralsPage from '@/pages/ReferralsPage';
+import AirdropPage from '@/pages/AirdropPage';
+import FundraisersPage from '@/pages/FundraisersPage';
+import CoinomicsPage from '@/pages/CoinomicsPage';
+import AdminLoginPage from '@/pages/AdminLoginPage';
+import AdminPage from '@/pages/AdminPage';
+import NotFound from '@/pages/NotFound';
+import { BorkProvider } from '@/context/BorkContext';
 
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-
-import HomePage from "@/pages/HomePage";
-import TasksPage from "@/pages/TasksPage";
-import ReferralsPage from "@/pages/ReferralsPage";
-import AdminPage from "@/pages/AdminPage";
-import AdminLoginPage from "@/pages/AdminLoginPage";
-import CoinomicsPage from "@/pages/CoinomicsPage";
-import AirdropPage from "@/pages/AirdropPage";
-import PresalePage from "@/pages/PresalePage";
-import Index from "@/pages/Index";
-import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BorkProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-grow">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/index" element={<Index />} />
-                <Route path="/tasks" element={<TasksPage />} />
-                <Route path="/referrals" element={<ReferralsPage />} />
-                <Route path="/coinomics" element={<CoinomicsPage />} />
-                <Route path="/airdrop" element={<AirdropPage />} />
-                <Route path="/presale" element={<PresalePage />} />
-                <Route path="/admin" element={<AdminPage />} />
-                <Route path="/admin/login" element={<AdminLoginPage />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
-        </BrowserRouter>
-      </BorkProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <BorkProvider>
+      <Router>
+        <Header />
+        <main className="min-h-screen bg-black">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/referrals" element={<ReferralsPage />} />
+            <Route path="/airdrop" element={<AirdropPage />} />
+            <Route path="/fundraisers" element={<FundraisersPage />} />
+            <Route path="/coinomics" element={<CoinomicsPage />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+        <Footer />
+      </Router>
+      <Toaster position="top-right" richColors />
+    </BrowserProvider>
+  );
+}
 
 export default App;
