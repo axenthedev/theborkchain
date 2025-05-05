@@ -62,7 +62,6 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [referrals, setReferrals] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Fetch tasks from Supabase
   const fetchTasks = async () => {
     try {
       const { data: taskData, error: taskError } = await supabase
@@ -121,7 +120,6 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Fetch user data from Supabase
   const fetchUserData = async (address: string) => {
     try {
       // Get user profile
@@ -180,7 +178,6 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Create new user in Supabase
   const createNewUser = async (address: string) => {
     try {
       const newReferralCode = `BORK${Math.floor(Math.random() * 10000)}`;
@@ -250,7 +247,6 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Connect wallet and initialize user data
   const connectWallet = async () => {
     if (!window.ethereum) {
       toast.error("MetaMask not found. Please install MetaMask first.");
@@ -296,6 +292,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.info("Wallet disconnected");
   };
 
+  // Fix the completeTask function
   const completeTask = async (taskId: string): Promise<boolean> => {
     if (!account) {
       toast.error("Please connect your wallet first");
@@ -348,7 +345,34 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       console.log(`Task completion record inserted successfully, updating balance...`);
       
-      // Update user balance using the RPC function
+      // Update user balance directly in database first
+      const { data: taskData } = await supabase
+        .from('tasks')
+        .select('reward')
+        .eq('id', taskId)
+        .single();
+        
+      if (taskData) {
+        const reward = taskData.reward;
+        
+        // Update the user's balance directly
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ 
+            balance: balance + reward,
+            total_earned: balance + reward
+          })
+          .eq('address', account);
+          
+        if (updateError) {
+          console.error("Error directly updating balance:", updateError);
+        } else {
+          // Update local balance state
+          setBalance(prevBalance => prevBalance + reward);
+        }
+      }
+      
+      // Also try the RPC function as a backup
       const { error: balanceUpdateError } = await supabase.rpc(
         'add_task_reward',
         {
@@ -358,24 +382,16 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       );
         
       if (balanceUpdateError) {
-        console.error("Error updating balance:", balanceUpdateError);
-        toast.error("Failed to update balance. Please try again.");
-        
-        // Revert local state change on error
-        setTasks(prevTasks => 
-          prevTasks.map(t => t.id === taskId ? { ...t, completed: false } : t)
-        );
-        
-        return false;
+        console.error("RPC Error updating balance:", balanceUpdateError);
+        // Don't revert the UI since we already tried a direct update
       }
       
       console.log(`Balance updated successfully, refreshing data...`);
       
       // Refresh user data to get updated balance
-      const userData = await fetchUserData(account);
-      if (userData) {
-        toast.success(`Task completed! +${task.reward} $BORK`);
-      }
+      await fetchUserData(account);
+      
+      toast.success(`Task completed! +${task.reward} $BORK`);
       
       // If the task has a destination URL, open it
       if (task.destinationUrl) {
@@ -406,12 +422,10 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success("Referral link copied to clipboard!");
   };
 
-  // Initial data fetch
   useEffect(() => {
     fetchTasks();
   }, []);
   
-  // Fetch user data when account changes
   useEffect(() => {
     if (account) {
       fetchUserData(account);

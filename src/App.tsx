@@ -9,6 +9,7 @@ import ReferralsPage from '@/pages/ReferralsPage';
 import AirdropPage from '@/pages/AirdropPage';
 import FundraisersPage from '@/pages/FundraisersPage';
 import CoinomicsPage from '@/pages/CoinomicsPage';
+import LeaderboardPage from '@/pages/LeaderboardPage';
 import AdminLoginPage from '@/pages/AdminLoginPage';
 import AdminPage from '@/pages/AdminPage';
 import NotFound from '@/pages/NotFound';
@@ -27,6 +28,7 @@ function App() {
             <Route path="/airdrop" element={<AirdropPage />} />
             <Route path="/fundraisers" element={<FundraisersPage />} />
             <Route path="/coinomics" element={<CoinomicsPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="*" element={<NotFound />} />

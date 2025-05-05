@@ -1,4 +1,4 @@
-// Import Link from react-router-dom instead of Link2
+
 import { Link } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { MoreHorizontal } from "lucide-react"
 
 const AdminPage = () => {
   const { connected, isAdmin, users, tasks } = useBork();
@@ -40,12 +41,22 @@ const AdminPage = () => {
   const [filteredUsers, setFilteredUsers] = useState(users);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [adminAccess, setAdminAccess] = useState(false);
 
   useEffect(() => {
-    if (!connected || !isAdmin) {
-      toast.error('Unauthorized access');
+    // Check for admin session in localStorage
+    const adminSession = localStorage.getItem('admin_session');
+    if (adminSession) {
+      try {
+        const session = JSON.parse(adminSession);
+        if (session.isLoggedIn) {
+          setAdminAccess(true);
+        }
+      } catch (error) {
+        console.error('Error parsing admin session:', error);
+      }
     }
-  }, [connected, isAdmin]);
+  }, []);
 
   useEffect(() => {
     // Filter users based on search term
@@ -56,13 +67,13 @@ const AdminPage = () => {
     setFilteredUsers(results);
   }, [searchTerm, users]);
 
-  if (!connected || !isAdmin) {
+  if (!adminAccess && (!connected || !isAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-4">Unauthorized</h1>
           <p className="text-gray-500">You do not have permission to access this page.</p>
-          <Link to="/" className="text-blue-500 hover:underline">Go to Home</Link>
+          <Link to="/admin/login" className="text-white hover:text-bork-green mt-4 block">Go to Admin Login</Link>
         </div>
       </div>
     );
@@ -163,5 +174,3 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
-
-import { MoreHorizontal } from "lucide-react"

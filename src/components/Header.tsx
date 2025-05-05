@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useBork } from '@/context/BorkContext';
 import { Button } from '@/components/ui/button';
-import { Rocket, Coins } from 'lucide-react';
+import { Rocket, Coins, Award } from 'lucide-react';
 
 const Header = () => {
   const { connected, connecting, account, balance, connectWallet, disconnectWallet } = useBork();
@@ -68,6 +68,12 @@ const Header = () => {
             className={`font-medium hover:text-bork-green transition-colors flex items-center gap-1 ${isActive('/fundraisers') ? 'text-bork-green' : 'text-white'}`}
           >
             <Coins className="w-4 h-4" /> Fundraisers
+          </Link>
+          <Link 
+            to="/leaderboard" 
+            className={`font-medium hover:text-bork-green transition-colors flex items-center gap-1 ${isActive('/leaderboard') ? 'text-bork-green' : 'text-white'}`}
+          >
+            <Award className="w-4 h-4" /> Leaderboard
           </Link>
         </nav>
         
@@ -144,6 +150,13 @@ const Header = () => {
               onClick={closeMenu}
             >
               <Coins className="w-5 h-5" /> Fundraisers
+            </Link>
+            <Link 
+              to="/leaderboard" 
+              className={`text-xl font-medium flex items-center gap-2 ${isActive('/leaderboard') ? 'text-bork-green' : 'text-white'}`}
+              onClick={closeMenu}
+            >
+              <Award className="w-5 h-5" /> Leaderboard
             </Link>
             
             {connected && (
