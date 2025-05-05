@@ -9,6 +9,72 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      airdrop_claims: {
+        Row: {
+          created_at: string
+          eligible: boolean | null
+          email: string | null
+          id: string
+          paid: boolean | null
+          payment_tx_hash: string | null
+          telegram_handle: string | null
+          twitter_handle: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          eligible?: boolean | null
+          email?: string | null
+          id?: string
+          paid?: boolean | null
+          payment_tx_hash?: string | null
+          telegram_handle?: string | null
+          twitter_handle?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          eligible?: boolean | null
+          email?: string | null
+          id?: string
+          paid?: boolean | null
+          payment_tx_hash?: string | null
+          telegram_handle?: string | null
+          twitter_handle?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      presale_contributions: {
+        Row: {
+          amount: number
+          approved: boolean | null
+          created_at: string
+          currency: string
+          id: string
+          tx_hash: string
+          wallet_address: string
+        }
+        Insert: {
+          amount: number
+          approved?: boolean | null
+          created_at?: string
+          currency: string
+          id?: string
+          tx_hash: string
+          wallet_address: string
+        }
+        Update: {
+          amount?: number
+          approved?: boolean | null
+          created_at?: string
+          currency?: string
+          id?: string
+          tx_hash?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       referrals: {
         Row: {
           created_at: string

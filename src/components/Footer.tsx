@@ -26,6 +26,8 @@ const Footer = () => {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><Link to="/tasks" className="hover:text-bork-green transition-colors">Tasks</Link></li>
                 <li><Link to="/referrals" className="hover:text-bork-green transition-colors">Referrals</Link></li>
+                <li><Link to="/airdrop" className="hover:text-bork-green transition-colors">Airdrop</Link></li>
+                <li><Link to="/presale" className="hover:text-bork-green transition-colors">Presale</Link></li>
                 <li><Link to="/leaderboard" className="hover:text-bork-green transition-colors">Leaderboard</Link></li>
               </ul>
             </div>
@@ -33,7 +35,7 @@ const Footer = () => {
             <div>
               <h3 className="text-white font-bold mb-3">Resources</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link to="/tokenomics" className="hover:text-bork-green transition-colors">Tokenomics</Link></li>
+                <li><Link to="/coinomics" className="hover:text-bork-green transition-colors">Tokenomics</Link></li>
                 <li><Link to="/whitepaper" className="hover:text-bork-green transition-colors">Whitepaper</Link></li>
                 <li><a href="https://github.com/borkchain" target="_blank" rel="noopener noreferrer" className="hover:text-bork-green transition-colors">GitHub</a></li>
               </ul>

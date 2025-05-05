@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useBork } from '@/context/BorkContext';
 import { Button } from '@/components/ui/button';
+import { Rocket, Coins } from 'lucide-react';
 
 const Header = () => {
   const { connected, connecting, account, balance, connectWallet, disconnectWallet } = useBork();
@@ -37,7 +38,7 @@ const Header = () => {
         </Link>
         
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8">
+        <nav className="hidden md:flex items-center space-x-6">
           <Link 
             to="/" 
             className={`font-medium hover:text-bork-green transition-colors ${isActive('/') ? 'text-bork-green' : 'text-white'}`}
@@ -55,6 +56,18 @@ const Header = () => {
             className={`font-medium hover:text-bork-green transition-colors ${isActive('/referrals') ? 'text-bork-green' : 'text-white'}`}
           >
             Referrals
+          </Link>
+          <Link 
+            to="/airdrop" 
+            className={`font-medium hover:text-bork-green transition-colors flex items-center gap-1 ${isActive('/airdrop') ? 'text-bork-green' : 'text-white'}`}
+          >
+            <Rocket className="w-4 h-4" /> Airdrop
+          </Link>
+          <Link 
+            to="/presale" 
+            className={`font-medium hover:text-bork-green transition-colors flex items-center gap-1 ${isActive('/presale') ? 'text-bork-green' : 'text-white'}`}
+          >
+            <Coins className="w-4 h-4" /> Presale
           </Link>
         </nav>
         
@@ -117,6 +130,20 @@ const Header = () => {
               onClick={closeMenu}
             >
               Referrals
+            </Link>
+            <Link 
+              to="/airdrop" 
+              className={`text-xl font-medium flex items-center gap-2 ${isActive('/airdrop') ? 'text-bork-green' : 'text-white'}`}
+              onClick={closeMenu}
+            >
+              <Rocket className="w-5 h-5" /> Airdrop
+            </Link>
+            <Link 
+              to="/presale" 
+              className={`text-xl font-medium flex items-center gap-2 ${isActive('/presale') ? 'text-bork-green' : 'text-white'}`}
+              onClick={closeMenu}
+            >
+              <Coins className="w-5 h-5" /> Presale
             </Link>
             
             {connected && (
