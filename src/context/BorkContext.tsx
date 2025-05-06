@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,6 +65,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const fetchTasks = async () => {
     try {
+      console.log("Fetching tasks...");
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
         .select('*');
@@ -99,6 +101,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           destinationUrl: task.destination_url || undefined
         })) || [];
 
+        console.log("Tasks mapped with completion status:", mappedTasks);
         setTasks(mappedTasks);
       } else {
         // If no user connected, just set tasks without completion status
@@ -113,6 +116,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           destinationUrl: task.destination_url || undefined
         })) || [];
 
+        console.log("Tasks mapped without completion status:", mappedTasks);
         setTasks(mappedTasks);
       }
     } catch (error) {
@@ -122,6 +126,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const fetchUserData = async (address: string) => {
     try {
+      console.log(`Fetching user data for ${address}...`);
       // Get user profile
       const { data: userData, error: userError } = await supabase
         .from('users')
@@ -132,11 +137,14 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (userError) {
         if (userError.code === 'PGRST116') {
           // User not found, create new user
+          console.log("User not found, creating new user...");
           return createNewUser(address);
         }
         console.error('Error fetching user data:', userError);
         return;
       }
+
+      console.log("User data fetched:", userData);
 
       // Get user's completed tasks
       const { data: userTasksData, error: userTasksError } = await supabase
@@ -200,6 +208,8 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       }
       
+      console.log("Creating new user with address:", address);
+      
       // Insert new user
       const { data: newUserData, error: insertError } = await supabase
         .from('users')
@@ -215,6 +225,8 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('Error creating user:', insertError);
         return null;
       }
+      
+      console.log("New user created:", newUserData);
       
       // If there's a referrer, create referral record
       if (referrerAddress) {
@@ -255,13 +267,18 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     try {
       setConnecting(true);
+      console.log("Connecting wallet...");
       
       // Request account access
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       
       const address = accounts[0];
+      console.log("Wallet connected:", address);
       setAccount(address);
       setConnected(true);
+      
+      // Store wallet address in localStorage to persist on page reload
+      localStorage.setItem('borkchain_wallet', address);
       
       // Fetch user data from Supabase or create new user
       const userData = await fetchUserData(address);
@@ -280,12 +297,16 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const disconnectWallet = () => {
+    console.log("Disconnecting wallet");
     setConnected(false);
     setAccount(null);
     setBalance(0);
     setReferralCode('');
     setReferrals([]);
     setIsAdmin(false);
+    
+    // Clear stored wallet from localStorage
+    localStorage.removeItem('borkchain_wallet');
     
     // Reset tasks completion status
     setTasks(prevTasks => prevTasks.map(task => ({ ...task, completed: false })));
@@ -345,53 +366,62 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       console.log(`Task completion record inserted successfully, updating balance...`);
       
-      // Update user balance directly in database first
-      const { data: taskData } = await supabase
+      // Get the task reward
+      const { data: taskData, error: taskError } = await supabase
         .from('tasks')
         .select('reward')
         .eq('id', taskId)
         .single();
         
-      if (taskData) {
-        const reward = taskData.reward;
-        
-        // Update the user's balance directly
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ 
-            balance: balance + reward,
-            total_earned: balance + reward
-          })
-          .eq('address', account);
-          
-        if (updateError) {
-          console.error("Error directly updating balance:", updateError);
-        } else {
-          // Update local balance state
-          setBalance(prevBalance => prevBalance + reward);
-        }
+      if (taskError) {
+        console.error("Error getting task reward:", taskError);
+        toast.error("Failed to complete task. Please try again.");
+        // Revert local state change on error
+        setTasks(prevTasks => 
+          prevTasks.map(t => t.id === taskId ? { ...t, completed: false } : t)
+        );
+        return false;
       }
       
-      // Also try the RPC function as a backup
-      const { error: balanceUpdateError } = await supabase.rpc(
+      const reward = taskData.reward;
+      
+      // Update user balance in database
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ 
+          balance: balance + reward,
+          total_earned: balance + reward
+        })
+        .eq('address', account);
+        
+      if (updateError) {
+        console.error("Error updating balance:", updateError);
+        toast.error("Task completed but balance update failed. Please refresh.");
+      } else {
+        // Update local state with new balance
+        setBalance(prevBalance => prevBalance + reward);
+        console.log(`Balance updated to ${balance + reward}`);
+      }
+      
+      // Attempt the RPC function as well (belt and suspenders approach)
+      const { error: rpcError } = await supabase.rpc(
         'add_task_reward',
         {
           user_addr: account,
           task_id: taskId
         }
       );
-        
-      if (balanceUpdateError) {
-        console.error("RPC Error updating balance:", balanceUpdateError);
-        // Don't revert the UI since we already tried a direct update
+      
+      if (rpcError) {
+        console.error("RPC Error:", rpcError);
+        // We already updated the balance directly, so this is just a warning
+        console.warn("RPC balance update failed, but direct update succeeded");
       }
       
-      console.log(`Balance updated successfully, refreshing data...`);
-      
-      // Refresh user data to get updated balance
+      // Force a refetch of user data to ensure we have current balance
       await fetchUserData(account);
       
-      toast.success(`Task completed! +${task.reward} $BORK`);
+      toast.success(`Task completed! +${reward} $BORK`);
       
       // If the task has a destination URL, open it
       if (task.destinationUrl) {
@@ -421,6 +451,18 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     navigator.clipboard.writeText(referralLink);
     toast.success("Referral link copied to clipboard!");
   };
+  
+  // Load wallet from localStorage on initial render
+  useEffect(() => {
+    const storedWallet = localStorage.getItem('borkchain_wallet');
+    if (storedWallet) {
+      console.log("Found stored wallet:", storedWallet);
+      setAccount(storedWallet);
+      setConnected(true);
+      fetchUserData(storedWallet);
+      fetchTasks();
+    }
+  }, []);
 
   useEffect(() => {
     fetchTasks();
@@ -434,36 +476,33 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [account]);
 
   useEffect(() => {
-    // Check if previously connected
-    const checkConnection = async () => {
-      if (window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (accounts.length > 0) {
-            connectWallet();
-          }
-        } catch (error) {
-          console.error("Error checking connection:", error);
-        }
-      }
-    };
-    
-    checkConnection();
-    
-    // Listen for account changes
+    // Listen for account changes in MetaMask
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', (accounts: string[]) => {
+        console.log("MetaMask accounts changed:", accounts);
         if (accounts.length > 0) {
-          connectWallet();
+          // Update to new account
+          setAccount(accounts[0]);
+          setConnected(true);
+          localStorage.setItem('borkchain_wallet', accounts[0]);
+          fetchUserData(accounts[0]);
         } else {
+          // Disconnect if user disconnected in MetaMask
           disconnectWallet();
         }
+      });
+      
+      // Listen for chain changes
+      window.ethereum.on('chainChanged', () => {
+        console.log("Chain changed, reloading...");
+        window.location.reload();
       });
     }
     
     return () => {
       if (window.ethereum) {
         window.ethereum.removeListener('accountsChanged', () => {});
+        window.ethereum.removeListener('chainChanged', () => {});
       }
     };
   }, []);

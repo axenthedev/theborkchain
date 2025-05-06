@@ -64,10 +64,10 @@ const TasksPage = () => {
   
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'daily': return 'bg-blue-500/20 text-blue-500';
-      case 'weekly': return 'bg-purple-500/20 text-purple-500';
-      case 'one-time': return 'bg-pink-500/20 text-pink-500';
-      default: return 'bg-gray-500/20 text-gray-500';
+      case 'daily': return 'bg-white/20 text-white';
+      case 'weekly': return 'bg-purple-500/20 text-white';
+      case 'one-time': return 'bg-pink-500/20 text-white';
+      default: return 'bg-gray-500/20 text-white';
     }
   };
 
@@ -79,7 +79,7 @@ const TasksPage = () => {
           <div className="flex justify-center mb-6">
             <BorkDog size="medium" />
           </div>
-          <h2 className="text-2xl font-bold mb-4">Connect Your Wallet</h2>
+          <h2 className="text-2xl font-bold mb-4 text-white">Connect Your Wallet</h2>
           <p className="text-gray-400 mb-6">You need to connect your wallet to access tasks and start earning $BORK</p>
           <Button onClick={connectWallet} className="bork-button w-full">
             Connect Wallet
@@ -104,7 +104,7 @@ const TasksPage = () => {
                 <Badge className={getTypeColor(task.type)}>{task.type}</Badge>
               </div>
               
-              <h3 className="text-lg font-bold mb-1">{task.title}</h3>
+              <h3 className="text-lg font-bold mb-1 text-white">{task.title}</h3>
               <p className="text-gray-400 mb-4">{task.description}</p>
             </div>
             
@@ -154,7 +154,7 @@ const TasksPage = () => {
                 <BorkDog size="small" />
               </div>
               
-              <h2 className="text-xl font-bold mb-2 text-center">Your Stats</h2>
+              <h2 className="text-xl font-bold mb-2 text-center text-white">Your Stats</h2>
               
               <div className="flex flex-col space-y-4 mt-6">
                 <div className="bg-black/50 backdrop-blur-md rounded-lg p-4 border border-bork-green/30 shadow-[0_0_10px_rgba(57,255,20,0.2)]">
@@ -177,22 +177,22 @@ const TasksPage = () => {
               </div>
               
               <div className="mt-6">
-                <h3 className="font-medium text-gray-300 mb-2">Task Filters</h3>
+                <h3 className="font-medium text-white mb-2">Task Filters</h3>
                 <div className="flex flex-wrap gap-2">
                   <button
-                    className={`px-3 py-1 rounded-full text-sm transition-all ${filter === 'all' ? 'bg-bork-green text-black font-bold shadow-[0_0_10px_rgba(57,255,20,0.5)]' : 'bg-black/50 text-gray-300 border border-white/10'}`}
+                    className={`px-3 py-1 rounded-full text-sm transition-all ${filter === 'all' ? 'bg-bork-green text-black font-bold shadow-[0_0_10px_rgba(57,255,20,0.5)]' : 'bg-black/50 text-white border border-white/10'}`}
                     onClick={() => setFilter('all')}
                   >
                     All Tasks
                   </button>
                   <button
-                    className={`px-3 py-1 rounded-full text-sm transition-all ${filter === 'pending' ? 'bg-bork-green text-black font-bold shadow-[0_0_10px_rgba(57,255,20,0.5)]' : 'bg-black/50 text-gray-300 border border-white/10'}`}
+                    className={`px-3 py-1 rounded-full text-sm transition-all ${filter === 'pending' ? 'bg-bork-green text-black font-bold shadow-[0_0_10px_rgba(57,255,20,0.5)]' : 'bg-black/50 text-white border border-white/10'}`}
                     onClick={() => setFilter('pending')}
                   >
                     Pending
                   </button>
                   <button
-                    className={`px-3 py-1 rounded-full text-sm transition-all ${filter === 'completed' ? 'bg-bork-green text-black font-bold shadow-[0_0_10px_rgba(57,255,20,0.5)]' : 'bg-black/50 text-gray-300 border border-white/10'}`}
+                    className={`px-3 py-1 rounded-full text-sm transition-all ${filter === 'completed' ? 'bg-bork-green text-black font-bold shadow-[0_0_10px_rgba(57,255,20,0.5)]' : 'bg-black/50 text-white border border-white/10'}`}
                     onClick={() => setFilter('completed')}
                   >
                     Completed
@@ -205,7 +205,7 @@ const TasksPage = () => {
           {/* Main Content */}
           <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-8">
-              <h1 className="text-3xl font-bold">
+              <h1 className="text-3xl font-bold text-white">
                 <span className="text-bork-green neon-text">$BORK</span> Tasks
               </h1>
               
@@ -221,10 +221,10 @@ const TasksPage = () => {
             
             <Tabs defaultValue="all" className="animate-fade-in">
               <TabsList className="bg-black/50 border border-white/10 backdrop-blur-md">
-                <TabsTrigger value="all" className="data-[state=active]:bg-bork-green data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(57,255,20,0.5)]">All Tasks</TabsTrigger>
-                <TabsTrigger value="daily" className="data-[state=active]:bg-bork-green data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(57,255,20,0.5)]">Daily</TabsTrigger>
-                <TabsTrigger value="weekly" className="data-[state=active]:bg-bork-green data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(57,255,20,0.5)]">Weekly</TabsTrigger>
-                <TabsTrigger value="one-time" className="data-[state=active]:bg-bork-green data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(57,255,20,0.5)]">One-time</TabsTrigger>
+                <TabsTrigger value="all" className="data-[state=active]:bg-bork-green data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(57,255,20,0.5)] text-white">All Tasks</TabsTrigger>
+                <TabsTrigger value="daily" className="data-[state=active]:bg-bork-green data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(57,255,20,0.5)] text-white">Daily</TabsTrigger>
+                <TabsTrigger value="weekly" className="data-[state=active]:bg-bork-green data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(57,255,20,0.5)] text-white">Weekly</TabsTrigger>
+                <TabsTrigger value="one-time" className="data-[state=active]:bg-bork-green data-[state=active]:text-black data-[state=active]:shadow-[0_0_10px_rgba(57,255,20,0.5)] text-white">One-time</TabsTrigger>
               </TabsList>
               
               <TabsContent value="all">
