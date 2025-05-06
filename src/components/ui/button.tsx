@@ -19,6 +19,12 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-white underline-offset-4 hover:underline hover:text-bork-green",
+        supporter: "bg-emerald-800/50 text-emerald-100 hover:bg-emerald-700/60 hover:shadow-[0_0_15px_rgba(16,185,129,0.4)]",
+        leader: "bg-blue-800/50 text-blue-100 hover:bg-blue-700/60 hover:shadow-[0_0_15px_rgba(59,130,246,0.4)]",
+        alpha: "bg-yellow-800/50 text-yellow-100 hover:bg-yellow-700/60 hover:shadow-[0_0_15px_rgba(251,191,36,0.4)]",
+        og: "bg-purple-800/50 text-purple-100 hover:bg-purple-700/60 hover:shadow-[0_0_15px_rgba(168,85,247,0.4)]",
+        mega: "bg-red-800/50 text-red-100 hover:bg-red-700/60 hover:shadow-[0_0_15px_rgba(239,68,68,0.4)]",
+        team: "bg-white/20 text-white hover:bg-white/30 hover:shadow-[0_0_15px_rgba(255,255,255,0.4)]",
       },
       size: {
         default: "h-10 px-5 py-2.5",

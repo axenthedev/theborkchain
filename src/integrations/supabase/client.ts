@@ -21,10 +21,11 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 declare module '@supabase/supabase-js' {
   interface SupabaseClient<Database = any> {
     rpc<
-      FunctionName extends 'add_task_reward' | 'add_referral_bonus' | 'create_admin_user',
+      FunctionName extends 'add_task_reward' | 'add_referral_bonus' | 'create_admin_user' | 'update_badge_tier',
       Args extends
         FunctionName extends 'add_task_reward' ? { user_addr: string; task_id: string } :
         FunctionName extends 'add_referral_bonus' ? { referrer_addr: string; bonus_amount: number } :
+        FunctionName extends 'update_badge_tier' ? { wallet_addr: string } :
         Record<PropertyKey, never>
     >(
       functionName: FunctionName,
