@@ -6,12 +6,13 @@ import { useBork } from "@/context/BorkContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Coins, PiggyBank } from "lucide-react";
+import { Coins, PiggyBank, QrCode, Copy } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Form schema for fundraiser contributions
 const fundraiserFormSchema = z.object({
@@ -38,6 +39,8 @@ const FundraisersPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [totalRaised, setTotalRaised] = useState(0);
   const [targetAmount] = useState(100000); // $100K target
+  
+  const WALLET_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
   
   const form = useForm<FundraiserFormValues>({
     resolver: zodResolver(fundraiserFormSchema),
@@ -123,6 +126,14 @@ const FundraisersPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(WALLET_ADDRESS);
+    toast({
+      title: "Wallet address copied!",
+      description: "The address has been copied to your clipboard",
+    });
   };
 
   // Calculate progress percentage
@@ -235,83 +246,138 @@ const FundraisersPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white">Amount ($)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="5.00" {...field} />
-                        </FormControl>
-                        <FormDescription className="text-gray-400">
-                          Minimum contribution: $5 USD equivalent
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="currency"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white">Currency</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a currency" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {SUPPORTED_CURRENCIES.map((currency) => (
-                              <SelectItem key={currency.value} value={currency.value}>
-                                {currency.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="tx_hash"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white">Transaction Hash</FormLabel>
-                        <FormControl>
-                          <Input placeholder="0x..." {...field} />
-                        </FormControl>
-                        <FormDescription className="text-gray-400">
-                          The transaction hash/ID of your payment
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="py-2">
-                    <p className="text-sm text-gray-400 mb-4">
-                      Send your contribution to this wallet address: <br/>
-                      <span className="font-mono text-bork-green break-all">0x742d35Cc6634C0532925a3b844Bc454e4438f44e</span>
-                    </p>
+              <Tabs defaultValue="form" className="w-full mb-6">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="form">Submit Transaction</TabsTrigger>
+                  <TabsTrigger value="payment">Send Payment</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="form">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="amount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-white">Amount ($)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="5.00" {...field} />
+                            </FormControl>
+                            <FormDescription className="text-gray-400">
+                              Minimum contribution: $5 USD equivalent
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="currency"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-white">Currency</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a currency" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {SUPPORTED_CURRENCIES.map((currency) => (
+                                  <SelectItem key={currency.value} value={currency.value}>
+                                    {currency.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="tx_hash"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-white">Transaction Hash</FormLabel>
+                            <FormControl>
+                              <Input placeholder="0x..." {...field} />
+                            </FormControl>
+                            <FormDescription className="text-gray-400">
+                              The transaction hash/ID of your payment
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button 
+                        type="submit" 
+                        className="bork-button w-full mt-6"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Submitting..." : "Submit Contribution"}
+                      </Button>
+                    </form>
+                  </Form>
+                </TabsContent>
+                
+                <TabsContent value="payment">
+                  <div className="space-y-6">
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-semibold text-white mb-2">Contribute with Crypto</h3>
+                      <p className="text-gray-400 text-sm">Send your contribution to the wallet address below</p>
+                    </div>
+                    
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="bg-white p-4 rounded-xl mb-4">
+                        <img 
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${WALLET_ADDRESS}`}
+                          alt="Payment QR Code"
+                          className="w-48 h-48"
+                        />
+                      </div>
+                      
+                      <div className="flex items-center space-x-2 bg-black/40 p-3 rounded-xl border border-bork-green/30 w-full">
+                        <div className="font-mono text-sm text-bork-green break-all flex-1">
+                          {WALLET_ADDRESS}
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          className="shrink-0"
+                          onClick={copyToClipboard}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-black/40 p-4 rounded-xl border border-bork-green/30">
+                      <h4 className="font-semibold text-white mb-2 flex items-center gap-2">
+                        <Coins className="h-4 w-4 text-bork-green" /> 
+                        Important Instructions
+                      </h4>
+                      <ul className="list-disc list-inside space-y-2 text-gray-400 text-sm">
+                        <li>Minimum contribution is $5 USDT or equivalent</li>
+                        <li>Supported currencies: USDT (TRC20/ERC20), ETH, BNB</li>
+                        <li>After sending, copy your transaction hash</li>
+                        <li>Submit your contribution details in the "Submit Transaction" tab</li>
+                      </ul>
+                    </div>
+                    
+                    <Button
+                      onClick={() => document.querySelector('[data-value="form"]')?.dispatchEvent(new Event('click'))}
+                      className="bork-button w-full"
+                    >
+                      Go to Submission Form
+                    </Button>
                   </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="bork-button w-full"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Submitting..." : "Submit Contribution"}
-                  </Button>
-                </form>
-              </Form>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         )}

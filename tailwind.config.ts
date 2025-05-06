@@ -128,7 +128,7 @@ export default {
 				'fade-in': 'fade-in 0.8s ease-out forwards',
 			},
 			fontFamily: {
-				'bork': ['Montserrat', 'sans-serif'],
+				'bork': ['Space Grotesk', 'Montserrat', 'sans-serif'],
 			}
 		}
 	},
