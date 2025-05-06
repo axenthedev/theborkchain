@@ -49,6 +49,7 @@ export type Database = {
         Row: {
           amount: number
           approved: boolean | null
+          badge_tier: string | null
           created_at: string
           currency: string
           id: string
@@ -58,6 +59,7 @@ export type Database = {
         Insert: {
           amount: number
           approved?: boolean | null
+          badge_tier?: string | null
           created_at?: string
           currency: string
           id?: string
@@ -67,6 +69,7 @@ export type Database = {
         Update: {
           amount?: number
           approved?: boolean | null
+          badge_tier?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -242,6 +245,10 @@ export type Database = {
       }
       create_admin_user: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      update_badge_tier: {
+        Args: { wallet_addr: string }
         Returns: undefined
       }
     }

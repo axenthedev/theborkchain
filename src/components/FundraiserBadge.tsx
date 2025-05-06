@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { Dog, Wolf, Zap, Gem, Dragon, Briefcase } from "lucide-react";
+import { Award, Star, Gem, CircleDollarSign, Trophy, BadgeDollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { cn } from "@/lib/utils";
 
 export type BadgeTier = 
   | 'pup_supporter' 
@@ -32,7 +33,7 @@ export const BADGE_TIERS: BadgeInfo[] = [
   {
     id: 'pup_supporter',
     name: 'Pup Supporter',
-    icon: <Dog className="h-6 w-6 text-emerald-400" />,
+    icon: <BadgeDollarSign className="h-6 w-6 text-emerald-400" />,
     minAmount: 5,
     maxAmount: 19,
     benefits: [
@@ -45,7 +46,7 @@ export const BADGE_TIERS: BadgeInfo[] = [
   {
     id: 'pack_leader',
     name: 'Pack Leader',
-    icon: <Wolf className="h-6 w-6 text-blue-400" />,
+    icon: <Star className="h-6 w-6 text-blue-400" />,
     minAmount: 20,
     maxAmount: 99,
     benefits: [
@@ -59,7 +60,7 @@ export const BADGE_TIERS: BadgeInfo[] = [
   {
     id: 'alpha_bork',
     name: 'Alpha Bork',
-    icon: <Zap className="h-6 w-6 text-yellow-400" />,
+    icon: <Award className="h-6 w-6 text-yellow-400" />,
     minAmount: 100,
     maxAmount: 499,
     benefits: [
@@ -88,7 +89,7 @@ export const BADGE_TIERS: BadgeInfo[] = [
   {
     id: 'mega_bork',
     name: 'Mega Bork',
-    icon: <Dragon className="h-6 w-6 text-red-400" />,
+    icon: <Trophy className="h-6 w-6 text-red-400" />,
     minAmount: 1000,
     maxAmount: 4999,
     benefits: [
@@ -103,7 +104,7 @@ export const BADGE_TIERS: BadgeInfo[] = [
   {
     id: 'borkchain_team',
     name: 'BorkChain Team',
-    icon: <Briefcase className="h-6 w-6 text-white" />,
+    icon: <CircleDollarSign className="h-6 w-6 text-white" />,
     minAmount: 5000,
     maxAmount: null,
     benefits: [
