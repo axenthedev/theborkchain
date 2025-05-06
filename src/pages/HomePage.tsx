@@ -1,11 +1,10 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useBork } from '@/context/BorkContext';
 import BorkDog from '@/components/BorkDog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, Calendar, Flag, Rocket, Star } from 'lucide-react';
+import { ArrowRight, Calendar, Flag, Rocket, Star, Wallet } from 'lucide-react';
 
 const HomePage = () => {
   const { connected, connectWallet, balance, tasks } = useBork();
@@ -55,93 +54,63 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section - Updated with Better Styling */}
+      {/* Hero Section - Updated to match the image design */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-black">
-        <div 
-          ref={heroRef}
-          className="absolute inset-0 w-full h-full bg-[radial-gradient(circle,rgba(57,255,20,0.15)_0%,rgba(0,0,0,0)_70%)]"
-        ></div>
-        
-        {/* Grid Background with subtle animation */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#39FF1410_1px,transparent_1px),linear-gradient(to_bottom,#39FF1410_1px,transparent_1px)] bg-[size:50px_50px] animate-pulse-green"></div>
+        {/* Grid Background */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#39FF1410_1px,transparent_1px),linear-gradient(to_bottom,#39FF1410_1px,transparent_1px)] bg-[size:50px_50px]"></div>
         
         <div className="container mx-auto px-6 relative z-10 pt-16 md:pt-0">
-          <div className="flex flex-col-reverse md:flex-row items-center justify-between gap-10 md:gap-8">
-            <div className="w-full md:w-3/5 lg:w-3/5 text-center md:text-left max-w-3xl mx-auto md:mx-0">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 sm:mb-8 leading-tight tracking-tight">
-                The <span className="text-bork-green neon-text">$BORK</span> 
-                <br className="hidden md:block" /> 
-                revolution 
-                <br className="hidden md:block" />
-                starts <span className="text-bork-green neon-text">now</span>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-10 md:gap-16">
+            {/* Left side content - Text and CTA */}
+            <div className="w-full md:w-1/2 text-left">
+              <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold mb-6 leading-tight tracking-tight">
+                Earn <span className="text-bork-green neon-text">$BORK</span>
+                <br />
+                by Completing
+                <br />
+                Tasks!
               </h1>
               
-              <p className="text-gray-200 text-lg sm:text-xl md:text-2xl mb-8 sm:mb-10 leading-relaxed md:max-w-xl lg:max-w-2xl">
-                <span className="text-white font-semibold">Join the pack</span> and earn $BORK coin by completing missions 
-                <span className="block mt-2 mb-3">and referring friends to BorkChain.</span>
-                <span className="block text-bork-green font-bold text-xl sm:text-2xl">The first memecoin that rewards YOUR participation.</span>
+              <p className="text-gray-300 text-lg sm:text-xl mb-10 leading-relaxed max-w-xl">
+                Join the pack on BorkChain, the memecoin-powered task platform where completing missions earns you $BORK tokens.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-5 justify-center md:justify-start">
+              <div className="flex flex-wrap gap-4">
                 <Button 
                   onClick={connectWallet} 
-                  className="bork-button text-base sm:text-lg px-8 sm:px-10 py-6 sm:py-7 h-auto relative overflow-hidden group"
+                  className="bg-bork-green hover:bg-bork-green/90 text-black font-bold px-6 py-6 h-auto rounded-xl text-lg flex items-center gap-2"
                   disabled={connected}
                 >
-                  <span className="relative z-10 font-bold">
-                    {connected ? 'Wallet Connected' : 'Connect Wallet'}
-                  </span>
-                  <span className="absolute inset-0 bg-white/20 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300"></span>
+                  <Wallet className="w-5 h-5" />
+                  {connected ? 'Wallet Connected' : 'Connect Wallet'}
                 </Button>
                 
-                <Link to="/tasks" className="w-full sm:w-auto">
+                <Link to="/tasks">
                   <Button 
                     variant="outline" 
-                    className="border-2 border-bork-green text-bork-green hover:bg-bork-green/10 hover:text-white transition-all duration-300 text-base sm:text-lg px-8 sm:px-10 py-6 sm:py-7 h-auto w-full sm:w-auto group"
+                    className="border-2 border-bork-green text-bork-green hover:bg-bork-green/10 px-6 py-6 h-auto rounded-xl text-lg"
                   >
-                    <span className="font-bold">View Tasks</span>
-                    <ArrowRight className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />
+                    Learn More
                   </Button>
                 </Link>
               </div>
-              
-              <div className="mt-8 sm:mt-10 flex flex-wrap gap-4 sm:gap-5 justify-center md:justify-start">
-                <div className="bg-black/70 rounded-xl border border-white/10 px-4 sm:px-5 py-2 sm:py-3 flex items-center backdrop-blur-md hover:border-bork-green/50 transition-all">
-                  <div className="w-3 h-3 bg-bork-green rounded-full mr-2 sm:mr-3 animate-pulse"></div>
-                  <span className="text-base sm:text-lg">Users: 7,821</span>
-                </div>
-                {connected && (
-                  <div className="bg-black/70 rounded-xl border border-white/10 px-4 sm:px-5 py-2 sm:py-3 flex items-center backdrop-blur-md hover:border-bork-green/50 transition-all">
-                    <div className="w-3 h-3 bg-bork-green rounded-full mr-2 sm:mr-3 animate-pulse"></div>
-                    <span className="text-base sm:text-lg">{balance} $BORK</span>
-                  </div>
-                )}
-              </div>
             </div>
             
-            {/* Larger, more prominent mascot */}
-            <div className="w-full md:w-2/5 lg:w-2/5 flex justify-center md:justify-end">
+            {/* Right side content - Dog mascot with neon effect */}
+            <div className="w-full md:w-1/2 flex justify-center md:justify-end">
               <div className="relative">
-                <div className="absolute -inset-8 bg-bork-green/20 rounded-full blur-3xl animate-pulse opacity-70"></div>
+                <div className="absolute -inset-4 rounded-full bg-bork-green/20 blur-3xl animate-pulse"></div>
                 <BorkDog 
                   size="large" 
-                  className="w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[450px] xl:h-[450px] filter drop-shadow-[0_0_50px_rgba(57,255,20,0.6)] animate-bounce-small" 
+                  className="w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-96 filter drop-shadow-[0_0_30px_rgba(57,255,20,0.7)] animate-float" 
                 />
               </div>
             </div>
           </div>
         </div>
-        
-        <div className="absolute bottom-8 left-0 right-0 flex justify-center">
-          <div className="animate-bounce cursor-pointer" onClick={() => document.getElementById('roadmap')?.scrollIntoView({ behavior: 'smooth' })}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 sm:h-10 sm:w-10 text-bork-green" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </div>
-        </div>
       </section>
       
-      {/* New Roadmap Section */}
+      {/* Roadmap Section */}
       <section id="roadmap" ref={roadmapRef} className="py-20 bg-black opacity-0 transition-all duration-700 ease-out">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-center">
@@ -258,7 +227,7 @@ const HomePage = () => {
         </div>
       </section>
       
-      {/* How It Works Section - Improved */}
+      {/* How It Works Section */}
       <section ref={howItWorksRef} className="py-20 bg-[#040404] opacity-0 transition-all duration-700 ease-out">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-center">
