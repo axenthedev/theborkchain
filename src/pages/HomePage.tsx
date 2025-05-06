@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useBork } from '@/context/BorkContext';
@@ -54,12 +55,12 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section - Updated to match the image design */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-black">
+      {/* Hero Section - Updated to position text below header and be mobile responsive */}
+      <section className="relative pt-20 pb-24 md:pt-28 md:pb-32 flex items-center overflow-hidden bg-black">
         {/* Grid Background */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#39FF1410_1px,transparent_1px),linear-gradient(to_bottom,#39FF1410_1px,transparent_1px)] bg-[size:50px_50px]"></div>
         
-        <div className="container mx-auto px-6 relative z-10 pt-16 md:pt-0">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-10 md:gap-16">
             {/* Left side content - Text and CTA */}
             <div className="w-full md:w-1/2 text-left">
