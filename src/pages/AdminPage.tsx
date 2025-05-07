@@ -52,6 +52,7 @@ const AdminPage = () => {
   const [loading, setLoading] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [editingBalance, setEditingBalance] = useState('');
+  const [formError, setFormError] = useState('');
   
   // New state for task management
   const [newTask, setNewTask] = useState({
@@ -211,21 +212,68 @@ const AdminPage = () => {
     }
   };
 
+  const validateTaskForm = () => {
+    setFormError('');
+    
+    if (!newTask.title.trim()) {
+      setFormError('Task title is required');
+      return false;
+    }
+    
+    if (!newTask.description.trim()) {
+      setFormError('Task description is required');
+      return false;
+    }
+    
+    if (!newTask.reward || newTask.reward <= 0) {
+      setFormError('Reward must be a positive number');
+      return false;
+    }
+    
+    if (!newTask.difficulty) {
+      setFormError('Difficulty level is required');
+      return false;
+    }
+    
+    if (!newTask.type) {
+      setFormError('Task type is required');
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleAddTask = async () => {
+    // Validate form fields
+    if (!validateTaskForm()) {
+      return;
+    }
+    
     try {
-      // Validate task input
-      if (!newTask.title || !newTask.description) {
-        toast.error('Task title and description are required');
+      console.log('Submitting task to Supabase:', newTask);
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([{
+          title: newTask.title.trim(),
+          description: newTask.description.trim(),
+          reward: parseInt(newTask.reward.toString()),
+          difficulty: newTask.difficulty,
+          type: newTask.type,
+          destination_url: newTask.destination_url.trim() || null
+        }])
+        .select();
+        
+      if (error) {
+        console.error('Supabase error:', error);
+        toast.error(`Failed to add task: ${error.message}`);
         return;
       }
       
-      const { error } = await supabase
-        .from('tasks')
-        .insert([newTask]);
-        
-      if (error) throw error;
-      
+      console.log('Task added successfully:', data);
       toast.success('Task added successfully');
+      
+      // Reset form
       setNewTask({
         title: '',
         description: '',
@@ -234,10 +282,12 @@ const AdminPage = () => {
         type: 'daily',
         destination_url: ''
       });
+      
+      // Refresh tasks list
       fetchAllData();
     } catch (error) {
       console.error('Error adding task:', error);
-      toast.error('Failed to add task');
+      toast.error(`Failed to add task: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -446,6 +496,13 @@ const AdminPage = () => {
         <TabsContent value="tasks" className="animate-fade-in">
           <div className="mb-8 border border-white/10 p-6 rounded-lg bg-black/40">
             <h3 className="font-bold text-xl mb-4 text-white">Add New Task</h3>
+            
+            {formError && (
+              <div className="mb-4 p-3 bg-red-900/30 border border-red-500 rounded-md text-white">
+                {formError}
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="title">Task Title</Label>
