@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +37,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { MoreHorizontal, UserX, Pencil, Award, LinkIcon, ExternalLink, Download } from "lucide-react"
+import { MoreHorizontal, UserX, Pencil, Award, LinkIcon, ExternalLink, Download, Check, AlertCircle } from "lucide-react"
 
 const AdminPage = () => {
   const { connected, isAdmin, users } = useBork();
@@ -53,8 +54,9 @@ const AdminPage = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [editingBalance, setEditingBalance] = useState('');
   const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // New state for task management
+  // New state for task management with updated field names to match Supabase
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -249,19 +251,26 @@ const AdminPage = () => {
       return;
     }
     
+    setIsSubmitting(true);
+    
     try {
+      // Log the task data being submitted for debugging
       console.log('Submitting task to Supabase:', newTask);
       
+      // Create a clean task object that matches Supabase schema
+      const taskToInsert = {
+        title: newTask.title.trim(),
+        description: newTask.description.trim(),
+        reward: parseInt(newTask.reward.toString()),
+        difficulty: newTask.difficulty,
+        type: newTask.type,
+        destination_url: newTask.destination_url.trim() || null
+      };
+      
+      // Insert task into Supabase
       const { data, error } = await supabase
         .from('tasks')
-        .insert([{
-          title: newTask.title.trim(),
-          description: newTask.description.trim(),
-          reward: parseInt(newTask.reward.toString()),
-          difficulty: newTask.difficulty,
-          type: newTask.type,
-          destination_url: newTask.destination_url.trim() || null
-        }])
+        .insert([taskToInsert])
         .select();
         
       if (error) {
@@ -288,6 +297,8 @@ const AdminPage = () => {
     } catch (error) {
       console.error('Error adding task:', error);
       toast.error(`Failed to add task: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -498,53 +509,54 @@ const AdminPage = () => {
             <h3 className="font-bold text-xl mb-4 text-white">Add New Task</h3>
             
             {formError && (
-              <div className="mb-4 p-3 bg-red-900/30 border border-red-500 rounded-md text-white">
+              <div className="mb-4 p-3 bg-red-900/30 border border-red-500 rounded-md text-white flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2 text-red-400" />
                 {formError}
               </div>
             )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="title">Task Title</Label>
+                <Label htmlFor="title" className="text-sm font-medium mb-1 block">Task Title</Label>
                 <Input
                   id="title"
                   value={newTask.title}
                   onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                  placeholder="Enter task title"
-                  className="mt-1"
+                  placeholder="Enter a clear task title"
+                  className="mt-1 bg-black/40 border-white/20 placeholder:text-gray-500"
                 />
               </div>
               
               <div>
-                <Label htmlFor="reward">Reward (BORK)</Label>
+                <Label htmlFor="reward" className="text-sm font-medium mb-1 block">Reward (BORK)</Label>
                 <Input
                   id="reward"
                   type="number"
                   value={newTask.reward}
                   onChange={(e) => setNewTask({...newTask, reward: parseInt(e.target.value) || 0})}
-                  placeholder="Enter reward amount"
-                  className="mt-1"
+                  placeholder="Amount of BORK tokens"
+                  className="mt-1 bg-black/40 border-white/20 placeholder:text-gray-500"
                 />
               </div>
               
               <div className="md:col-span-2">
-                <Label htmlFor="description">Description</Label>
-                <textarea
+                <Label htmlFor="description" className="text-sm font-medium mb-1 block">Description</Label>
+                <Textarea
                   id="description"
                   value={newTask.description}
                   onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                  placeholder="Enter task description"
-                  className="w-full p-2 bg-black/60 border border-white/20 rounded-md mt-1 min-h-[100px] text-white"
+                  placeholder="Provide detailed instructions for completing this task"
+                  className="w-full p-2 bg-black/40 border border-white/20 rounded-md mt-1 min-h-[100px] text-white placeholder:text-gray-500"
                 />
               </div>
               
               <div>
-                <Label htmlFor="difficulty">Difficulty</Label>
+                <Label htmlFor="difficulty" className="text-sm font-medium mb-1 block">Difficulty</Label>
                 <select
                   id="difficulty"
                   value={newTask.difficulty}
                   onChange={(e) => setNewTask({...newTask, difficulty: e.target.value})}
-                  className="w-full p-2 bg-black/60 border border-white/20 rounded-md mt-1 text-white"
+                  className="w-full p-2 bg-black/40 border border-white/20 rounded-md mt-1 text-white"
                 >
                   <option value="easy">Easy</option>
                   <option value="medium">Medium</option>
@@ -553,12 +565,12 @@ const AdminPage = () => {
               </div>
               
               <div>
-                <Label htmlFor="type">Task Type</Label>
+                <Label htmlFor="type" className="text-sm font-medium mb-1 block">Task Type</Label>
                 <select
                   id="type"
                   value={newTask.type}
                   onChange={(e) => setNewTask({...newTask, type: e.target.value})}
-                  className="w-full p-2 bg-black/60 border border-white/20 rounded-md mt-1 text-white"
+                  className="w-full p-2 bg-black/40 border border-white/20 rounded-md mt-1 text-white"
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -567,19 +579,33 @@ const AdminPage = () => {
               </div>
               
               <div className="md:col-span-2">
-                <Label htmlFor="destination_url">Destination URL (Optional)</Label>
+                <Label htmlFor="destination_url" className="text-sm font-medium mb-1 block">Destination URL (Optional)</Label>
                 <Input
                   id="destination_url"
                   value={newTask.destination_url}
                   onChange={(e) => setNewTask({...newTask, destination_url: e.target.value})}
                   placeholder="https://example.com"
-                  className="mt-1"
+                  className="mt-1 bg-black/40 border-white/20 placeholder:text-gray-500"
                 />
               </div>
               
-              <div className="md:col-span-2 mt-2">
-                <Button onClick={handleAddTask} className="w-full md:w-auto">
-                  Add Task
+              <div className="md:col-span-2 mt-4">
+                <Button 
+                  onClick={handleAddTask} 
+                  className="w-full md:w-auto"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="animate-spin mr-2">⏳</span>
+                      Adding Task...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Add Task
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

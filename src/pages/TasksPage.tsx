@@ -8,12 +8,14 @@ import { useBork } from '@/context/BorkContext';
 import { toast } from 'sonner';
 import { Check, X, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { formatLargeNumber } from '@/lib/utils';
 
 const TasksPage = () => {
   const { connected, connectWallet, balance, tasks, completeTask } = useBork();
   const [supabaseTasks, setSupabaseTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userTasks, setUserTasks] = useState([]);
+  const [processingTaskId, setProcessingTaskId] = useState(null);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -26,6 +28,7 @@ const TasksPage = () => {
 
         if (error) throw error;
         
+        console.log('Fetched tasks:', tasks);
         setSupabaseTasks(tasks || []);
       } catch (error) {
         console.error('Error fetching tasks:', error);
@@ -44,13 +47,22 @@ const TasksPage = () => {
       if (!connected) return;
       
       try {
+        const walletAddress = localStorage.getItem('wallet_address') || localStorage.getItem('borkchain_wallet');
+        if (!walletAddress) return;
+        
+        console.log('Fetching tasks for wallet:', walletAddress);
+        
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('address')
-          .eq('address', localStorage.getItem('wallet_address'))
-          .single();
+          .eq('address', walletAddress)
+          .maybeSingle();
           
         if (userError) throw userError;
+        if (!userData) {
+          console.log('User not found in database');
+          return;
+        }
         
         const { data: userTasksData, error: tasksError } = await supabase
           .from('user_tasks')
@@ -59,6 +71,7 @@ const TasksPage = () => {
           
         if (tasksError) throw tasksError;
         
+        console.log('User completed tasks:', userTasksData);
         setUserTasks(userTasksData || []);
       } catch (error) {
         console.error('Error fetching user tasks:', error);
@@ -84,27 +97,35 @@ const TasksPage = () => {
       return;
     }
     
-    // If it's a URL task, open the URL
-    if (taskUrl) {
-      window.open(taskUrl, '_blank');
-    }
+    setProcessingTaskId(taskId);
     
-    // For now, immediately mark as completed
-    // In a real implementation, you'd verify task completion
     try {
-      await completeTask(taskId);
-      toast.success('Task completed! $BORK tokens added to your balance');
+      // If it's a URL task, open the URL
+      if (taskUrl) {
+        window.open(taskUrl, '_blank');
+      }
       
-      // Refresh user tasks
-      const { data: userTasksData } = await supabase
-        .from('user_tasks')
-        .select('*')
-        .eq('user_address', localStorage.getItem('wallet_address'));
+      console.log('Completing task:', taskId);
+      const success = await completeTask(taskId);
+      
+      if (success) {
+        const task = supabaseTasks.find(t => t.id === taskId);
+        const reward = task ? task.reward : 0;
         
-      setUserTasks(userTasksData || []);
+        toast.success(`Task completed! +${reward} $BORK added to your balance`);
+        
+        // Add to completed tasks locally
+        setUserTasks(prev => [...prev, { 
+          task_id: taskId, 
+          user_address: localStorage.getItem('borkchain_wallet'),
+          completed_at: new Date().toISOString()
+        }]);
+      }
     } catch (error) {
       console.error('Error completing task:', error);
       toast.error('Failed to complete task');
+    } finally {
+      setProcessingTaskId(null);
     }
   };
 
@@ -155,7 +176,7 @@ const TasksPage = () => {
         <div className="max-w-md mx-auto text-center mb-10">
           <Card className="p-6 bork-card">
             <h2 className="text-lg font-semibold mb-2">Your $BORK Balance</h2>
-            <p className="text-3xl font-bold text-bork-green">{balance}</p>
+            <p className="text-3xl font-bold text-bork-green">{formatLargeNumber(balance)}</p>
           </Card>
         </div>
       )}
@@ -188,11 +209,14 @@ const TasksPage = () => {
               
               <Button
                 onClick={() => handleTaskClick(task.id, task.destination_url)}
+                disabled={processingTaskId === task.id}
                 className={`w-full ${isTaskCompleted(task.id) 
                   ? 'bg-black border border-bork-green text-bork-green hover:bg-bork-green/10' 
                   : 'bork-button'}`}
               >
-                {isTaskCompleted(task.id) ? (
+                {processingTaskId === task.id ? (
+                  <span className="animate-spin mr-2">⏳ Processing...</span>
+                ) : isTaskCompleted(task.id) ? (
                   <>
                     <Check className="w-4 h-4 mr-2" />
                     {task.destination_url ? 'Visit Again' : 'Completed'}

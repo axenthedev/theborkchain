@@ -68,7 +68,8 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log("Fetching tasks...");
       const { data: taskData, error: taskError } = await supabase
         .from('tasks')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (taskError) {
         console.error('Error fetching tasks:', taskError);
@@ -313,7 +314,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.info("Wallet disconnected");
   };
 
-  // Fix the completeTask function
+  // Improved completeTask function with better error handling
   const completeTask = async (taskId: string): Promise<boolean> => {
     if (!account) {
       toast.error("Please connect your wallet first");
@@ -322,11 +323,13 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     const task = tasks.find(t => t.id === taskId);
     if (!task) {
+      console.error(`Task not found: ${taskId}`);
       toast.error("Task not found");
       return false;
     }
     
     if (task.completed) {
+      console.log(`Task ${taskId} already completed`);
       toast.info("You have already completed this task!");
       return false;
     }
@@ -359,7 +362,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setTasks(prevTasks => 
             prevTasks.map(t => t.id === taskId ? { ...t, completed: false } : t)
           );
-          toast.error("Failed to complete task. Please try again.");
+          toast.error(`Failed to complete task: ${taskCompletionError.message}`);
           return false;
         }
       }
@@ -423,11 +426,6 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       toast.success(`Task completed! +${reward} $BORK`);
       
-      // If the task has a destination URL, open it
-      if (task.destinationUrl) {
-        window.open(task.destinationUrl, '_blank');
-      }
-      
       return true;
     } catch (error) {
       console.error("Error completing task:", error);
@@ -461,11 +459,10 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setConnected(true);
       fetchUserData(storedWallet);
       fetchTasks();
+    } else {
+      // No stored wallet, fetch tasks anyway but without completion status
+      fetchTasks();
     }
-  }, []);
-
-  useEffect(() => {
-    fetchTasks();
   }, []);
   
   useEffect(() => {
