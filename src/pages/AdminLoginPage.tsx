@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import BorkDog from '@/components/BorkDog';
 import { useBork } from '@/context/BorkContext';
+import { Lock, User } from 'lucide-react';
 
 const AdminLoginPage = () => {
   const [username, setUsername] = useState('');
@@ -56,8 +57,6 @@ const AdminLoginPage = () => {
     
     // Check admin credentials
     if (username === 'admin' && password === 'admin123') {
-      setIsLoggingIn(false);
-      
       // Set admin session in localStorage with timestamp
       localStorage.setItem('admin_session', JSON.stringify({
         isLoggedIn: true,
@@ -65,6 +64,7 @@ const AdminLoginPage = () => {
       }));
       
       toast.success('Admin login successful');
+      setIsLoggingIn(false);
       navigate('/admin');
     } else {
       setIsLoggingIn(false);
@@ -82,35 +82,41 @@ const AdminLoginPage = () => {
         </div>
         
         <form onSubmit={handleLogin} className="space-y-6">
-          <div>
+          <div className="relative">
             <label htmlFor="username" className="text-sm text-gray-400 mb-1 block">Username</label>
-            <Input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="bork-input"
-              placeholder="admin"
-              required
-            />
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="bork-input pl-10"
+                placeholder="admin"
+                required
+              />
+            </div>
           </div>
           
-          <div>
+          <div className="relative">
             <label htmlFor="password" className="text-sm text-gray-400 mb-1 block">Password</label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="bork-input"
-              placeholder="••••••••"
-              required
-            />
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bork-input pl-10"
+                placeholder="••••••••"
+                required
+              />
+            </div>
           </div>
           
           <Button 
             type="submit" 
-            className="bork-button w-full"
+            className="bork-button w-full py-6 h-auto"
             disabled={isLoggingIn}
           >
             {isLoggingIn ? 'Logging in...' : 'Login'}

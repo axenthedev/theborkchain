@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useBork } from '@/context/BorkContext';
@@ -6,6 +5,7 @@ import BorkDog from '@/components/BorkDog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ArrowRight, Calendar, Flag, Rocket, Star, Wallet } from 'lucide-react';
+import { formatLargeNumber } from '@/lib/utils';
 
 const HomePage = () => {
   const { connected, connectWallet, balance, tasks } = useBork();
@@ -279,7 +279,7 @@ const HomePage = () => {
         </div>
       </section>
       
-      {/* Coinomics Preview */}
+      {/* Coinomics Preview - Update to use formatLargeNumber */}
       <section className="py-20 bg-black relative">
         <div className="absolute inset-0 bg-bork-green/5"></div>
         
@@ -297,7 +297,7 @@ const HomePage = () => {
               <div className="grid grid-cols-2 gap-6">
                 <div className="bork-card transform transition-all hover:scale-105 hover:border-bork-green group">
                   <h3 className="text-xl font-bold mb-2 group-hover:text-bork-green transition-colors">Total Supply</h3>
-                  <p className="text-bork-green text-3xl font-bold">1,000,000,000</p>
+                  <p className="text-bork-green text-3xl font-bold">{formatLargeNumber(1000000000)}</p>
                 </div>
                 
                 <div className="bork-card transform transition-all hover:scale-105 hover:border-bork-green group">

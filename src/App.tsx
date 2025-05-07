@@ -29,7 +29,7 @@ function App() {
             <Route path="/fundraisers" element={<FundraisersPage />} />
             <Route path="/coinomics" element={<CoinomicsPage />} />
             <Route path="/leaderboard" element={<LeaderboardPage />} />
-            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/admin-login" element={<AdminLoginPage />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

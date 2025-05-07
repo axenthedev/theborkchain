@@ -49,7 +49,7 @@ const AdminPage = () => {
   const [tasks, setTasks] = useState([]);
   const [airdropClaims, setAirdropClaims] = useState([]);
   const [fundraisers, setFundraisers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [editingBalance, setEditingBalance] = useState('');
   
@@ -82,11 +82,16 @@ const AdminPage = () => {
             // Session expired, remove it
             localStorage.removeItem('admin_session');
             toast.error('Admin session expired. Please login again.');
+            window.location.href = '/admin-login';
           }
         }
       } catch (error) {
         console.error('Error parsing admin session:', error);
+        window.location.href = '/admin-login';
       }
+    } else {
+      // No admin session found
+      window.location.href = '/admin-login';
     }
   }, []);
 
@@ -101,7 +106,7 @@ const AdminPage = () => {
         .order('joined_at', { ascending: false });
       
       if (usersError) throw usersError;
-      setFilteredUsers(usersData);
+      setFilteredUsers(usersData || []);
       
       // Fetch tasks
       const { data: tasksData, error: tasksError } = await supabase
@@ -140,12 +145,15 @@ const AdminPage = () => {
 
   useEffect(() => {
     // Filter users based on search term
-    if (activeTab === 'users' && filteredUsers.length > 0) {
+    if (activeTab === 'users' && filteredUsers.length > 0 && searchTerm) {
       const results = filteredUsers.filter(user =>
         user.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.referral_code?.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredUsers(results);
+    } else if (activeTab === 'users' && !searchTerm) {
+      // If search is cleared, fetch all users again
+      fetchAllData();
     }
   }, [searchTerm, activeTab]);
 
@@ -154,7 +162,7 @@ const AdminPage = () => {
     localStorage.removeItem('admin_session');
     setAdminAccess(false);
     toast.success('Admin logged out successfully');
-    window.location.href = '/admin/login'; // Ensure complete redirect to login page
+    window.location.href = '/admin-login'; // Ensure complete redirect to login page
   };
 
   const handleDeleteUser = async (userId) => {
@@ -281,24 +289,16 @@ const AdminPage = () => {
     document.body.removeChild(link);
   };
 
+  if (!adminAccess) {
+    return null; // Will be redirected to login in useEffect
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin w-12 h-12 border-4 border-bork-green border-t-transparent rounded-full mx-auto"></div>
-          <p className="mt-4 text-white">Loading admin dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!adminAccess && (!connected || !isAdmin)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-4 text-white">Unauthorized</h1>
-          <p className="text-gray-500">You do not have permission to access this page.</p>
-          <Link to="/admin/login" className="text-white hover:text-bork-green mt-4 block">Go to Admin Login</Link>
+          <p className="mt-4 text-white">Loading...</p>
         </div>
       </div>
     );
@@ -731,24 +731,6 @@ const AdminPage = () => {
           </Table>
         </TabsContent>
       </Tabs>
-
-      {/* Task Modal */}
-      {isTaskModalOpen && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-black/90 border border-bork-green/30 p-8 rounded-lg max-w-xl w-full">
-            <h2 className="text-2xl font-bold mb-4 text-white">Tasks for User: {selectedUser.address}</h2>
-            <ul className="divide-y divide-white/10">
-              {tasks.map(task => (
-                <li key={task.id} className="py-2">
-                  <strong className="text-white">{task.title}</strong> - 
-                  <span className="text-bork-green ml-2">Reward: {task.reward} BORK</span>
-                </li>
-              ))}
-            </ul>
-            <Button onClick={() => setIsTaskModalOpen(false)} className="mt-6">Close</Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
