@@ -15,6 +15,33 @@ const AdminLoginPage = () => {
   const navigate = useNavigate();
   const { connected, isAdmin } = useBork();
   
+  // Check for existing admin session
+  useEffect(() => {
+    const adminSession = localStorage.getItem('admin_session');
+    if (adminSession) {
+      try {
+        const session = JSON.parse(adminSession);
+        if (session.isLoggedIn && session.timestamp) {
+          // Check if session is still valid (24 hours expiration)
+          const now = new Date().getTime();
+          const sessionTime = session.timestamp;
+          const sessionAgeHours = (now - sessionTime) / (1000 * 60 * 60);
+          
+          if (sessionAgeHours < 24) {
+            // Session is still valid, redirect to admin dashboard
+            navigate('/admin');
+          } else {
+            // Session expired, remove it from localStorage
+            localStorage.removeItem('admin_session');
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing admin session:', error);
+        localStorage.removeItem('admin_session');
+      }
+    }
+  }, [navigate]);
+  
   // If already authenticated as admin, redirect to admin dashboard
   useEffect(() => {
     if (connected && isAdmin) {
@@ -27,11 +54,11 @@ const AdminLoginPage = () => {
     
     setIsLoggingIn(true);
     
-    // Simple admin authentication
+    // Check admin credentials
     if (username === 'admin' && password === 'admin123') {
       setIsLoggingIn(false);
       
-      // Set admin session in localStorage
+      // Set admin session in localStorage with timestamp
       localStorage.setItem('admin_session', JSON.stringify({
         isLoggedIn: true,
         timestamp: new Date().getTime()

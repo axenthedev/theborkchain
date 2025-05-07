@@ -70,8 +70,19 @@ const AdminPage = () => {
       try {
         const session = JSON.parse(adminSession);
         if (session.isLoggedIn) {
-          setAdminAccess(true);
-          fetchAllData();
+          // Verify session hasn't expired (24 hours)
+          const now = new Date().getTime();
+          const sessionTime = session.timestamp;
+          const sessionAgeHours = (now - sessionTime) / (1000 * 60 * 60);
+          
+          if (sessionAgeHours < 24) {
+            setAdminAccess(true);
+            fetchAllData();
+          } else {
+            // Session expired, remove it
+            localStorage.removeItem('admin_session');
+            toast.error('Admin session expired. Please login again.');
+          }
         }
       } catch (error) {
         console.error('Error parsing admin session:', error);
@@ -99,7 +110,7 @@ const AdminPage = () => {
         .order('created_at', { ascending: false });
       
       if (tasksError) throw tasksError;
-      setTasks(tasksData);
+      setTasks(tasksData || []);
       
       // Fetch airdrop claims
       const { data: airdropData, error: airdropError } = await supabase
@@ -137,6 +148,14 @@ const AdminPage = () => {
       setFilteredUsers(results);
     }
   }, [searchTerm, activeTab]);
+
+  // Admin logout function
+  const handleLogout = () => {
+    localStorage.removeItem('admin_session');
+    setAdminAccess(false);
+    toast.success('Admin logged out successfully');
+    window.location.href = '/admin/login'; // Ensure complete redirect to login page
+  };
 
   const handleDeleteUser = async (userId) => {
     try {
@@ -186,6 +205,12 @@ const AdminPage = () => {
 
   const handleAddTask = async () => {
     try {
+      // Validate task input
+      if (!newTask.title || !newTask.description) {
+        toast.error('Task title and description are required');
+        return;
+      }
+      
       const { error } = await supabase
         .from('tasks')
         .insert([newTask]);
@@ -281,7 +306,12 @@ const AdminPage = () => {
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-5 text-white">Admin Dashboard</h1>
+      <div className="flex justify-between items-center mb-5">
+        <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
+        <Button variant="outline" onClick={handleLogout} className="bg-red-900/30 hover:bg-red-900/60 text-white">
+          Logout
+        </Button>
+      </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
         <TabsList className="mb-4 bg-black/80 border border-bork-green/20">
@@ -511,67 +541,68 @@ const AdminPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tasks.map((task) => (
-                <TableRow key={task.id} className="border-t border-white/5 hover:bg-black/40">
-                  <TableCell className="font-medium">{task.title}</TableCell>
-                  <TableCell>{task.description.substring(0, 50)}...</TableCell>
-                  <TableCell className="text-bork-green">{task.reward}</TableCell>
-                  <TableCell>{task.difficulty}</TableCell>
-                  <TableCell>{task.type}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        
-                        {task.destination_url && (
-                          <DropdownMenuItem onClick={() => window.open(task.destination_url, '_blank')}>
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Open URL
-                          </DropdownMenuItem>
-                        )}
-                        
-                        <DropdownMenuSeparator />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                              <span className="text-red-500">Delete Task</span>
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete this task?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will remove the task from the system. This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleDeleteTask(task.id)}
-                                className="bg-red-500 hover:bg-red-600"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {tasks.length === 0 && (
+              {tasks.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-gray-400">
-                    No tasks found.
+                    No tasks found. Create your first task above.
                   </TableCell>
                 </TableRow>
+              ) : (
+                tasks.map((task) => (
+                  <TableRow key={task.id} className="border-t border-white/5 hover:bg-black/40">
+                    <TableCell className="font-medium">{task.title}</TableCell>
+                    <TableCell>{task.description.substring(0, 50)}...</TableCell>
+                    <TableCell className="text-bork-green">{task.reward}</TableCell>
+                    <TableCell>{task.difficulty}</TableCell>
+                    <TableCell>{task.type}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          
+                          {task.destination_url && (
+                            <DropdownMenuItem onClick={() => window.open(task.destination_url, '_blank')}>
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Open URL
+                            </DropdownMenuItem>
+                          )}
+                          
+                          <DropdownMenuSeparator />
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <span className="text-red-500">Delete Task</span>
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete this task?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will remove the task from the system. This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleDeleteTask(task.id)}
+                                  className="bg-red-500 hover:bg-red-600"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
