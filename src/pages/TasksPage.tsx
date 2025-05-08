@@ -1,454 +1,401 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { useBork } from '@/context/BorkContext';
-import { toast } from 'sonner';
-import { Check, X, ExternalLink, Calendar, Star, Award, Zap, SquareCheck } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { formatLargeNumber } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
+import BorkDog from '@/components/BorkDog';
+import { ArrowRight, Award, Calendar, CheckCircle, Clock, Flame, Gift, Sparkles, Star, Target, Trophy, Wallet } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+export type TaskDifficulty = 'easy' | 'medium' | 'hard';
+export type TaskFrequency = 'daily' | 'weekly' | 'one-time';
 
 const TasksPage = () => {
-  const { connected, connectWallet, balance, tasks, completeTask } = useBork();
-  const [supabaseTasks, setSupabaseTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [userTasks, setUserTasks] = useState([]);
-  const [processingTaskId, setProcessingTaskId] = useState(null);
-  const [statsLoading, setStatsLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalCompleted: 0,
-    streakCount: 0,
-    streakBonus: 5
-  });
-  const isMobile = useIsMobile();
-
-  // Fetch all tasks
-  useEffect(() => {
-    const fetchTasks = async () => {
-      setLoading(true);
-      try {
-        const { data: tasks, error } = await supabase
-          .from('tasks')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        
-        setSupabaseTasks(tasks || []);
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-        toast.error('Failed to load tasks');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTasks();
-  }, []);
-
-  // Fetch user stats and completed tasks if wallet is connected
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!connected) {
-        setStatsLoading(false);
-        return;
-      }
-      
-      setStatsLoading(true);
-      try {
-        const walletAddress = localStorage.getItem('wallet_address') || localStorage.getItem('borkchain_wallet');
-        if (!walletAddress) {
-          setStatsLoading(false);
-          return;
-        }
-        
-        // Fetch user data with streak info
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('streak_count')
-          .eq('address', walletAddress)
-          .maybeSingle();
-          
-        if (userError) throw userError;
-        
-        // Update streak if user is returning
-        if (userData) {
-          const { data: streakData, error: streakError } = await supabase.rpc(
-            'update_user_streak',
-            { user_addr: walletAddress }
-          );
-
-          if (streakError) console.error('Error updating streak:', streakError);
-          
-          if (streakData && streakData !== userData.streak_count) {
-            // User's streak increased
-            toast.success(`🔥 Day ${streakData} streak! +${stats.streakBonus} $BORK`, {
-              duration: 5000,
-              position: 'top-center',
-            });
-          }
-        }
-        
-        // Fetch completed tasks
-        const { data: userTasksData, error: tasksError } = await supabase
-          .from('user_tasks')
-          .select('*')
-          .eq('user_address', walletAddress);
-          
-        if (tasksError) throw tasksError;
-        
-        setUserTasks(userTasksData || []);
-        
-        // Update stats
-        setStats(prev => ({
-          ...prev,
-          totalCompleted: userTasksData?.length || 0,
-          streakCount: userData?.streak_count || 0
-        }));
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      } finally {
-        setStatsLoading(false);
-      }
-    };
+  const { connected, connectWallet, tasks, completeTask, balance, account, streak } = useBork();
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'available' | 'completed'>('available');
+  const [animateReward, setAnimateReward] = useState<{taskId: string, amount: number} | null>(null);
+  
+  // Filter tasks based on completion status
+  const availableTasks = tasks.filter(task => !task.completed);
+  const completedTasks = tasks.filter(task => task.completed);
+  
+  // Calculate completion percentage
+  const completionPercentage = tasks.length > 0 
+    ? Math.round((completedTasks.length / tasks.length) * 100)
+    : 0;
+  
+  // Handle task completion with animation
+  const handleCompleteTask = async (taskId: string) => {
+    setIsLoading(true);
+    const task = tasks.find(t => t.id === taskId);
     
-    fetchUserData();
-  }, [connected]);
-
-  const isTaskCompleted = (taskId) => {
-    return userTasks.some(ut => ut.task_id === taskId);
-  };
-
-  const handleTaskClick = async (taskId, taskUrl) => {
-    if (!connected) {
-      toast.error('Please connect your wallet first');
-      return;
-    }
-    
-    // If task is already completed, just open URL
-    if (isTaskCompleted(taskId)) {
-      if (taskUrl) window.open(taskUrl, '_blank');
-      return;
-    }
-    
-    setProcessingTaskId(taskId);
-    
-    try {
-      // If it's a URL task, open the URL
-      if (taskUrl) {
-        window.open(taskUrl, '_blank');
-      }
+    if (task) {
+      setAnimateReward({taskId: task.id, amount: task.reward});
       
       const success = await completeTask(taskId);
-      
-      if (success) {
-        const task = supabaseTasks.find(t => t.id === taskId);
-        const reward = task ? task.reward : 0;
-        
-        toast.success(`Task completed! +${reward} $BORK added to your balance`);
-        
-        // Add to completed tasks locally
-        setUserTasks(prev => [...prev, { 
-          task_id: taskId, 
-          user_address: localStorage.getItem('borkchain_wallet'),
-          completed_at: new Date().toISOString()
-        }]);
-        
-        // Update stats
-        setStats(prev => ({
-          ...prev,
-          totalCompleted: prev.totalCompleted + 1
-        }));
+      if (!success) {
+        setAnimateReward(null);
       }
-    } catch (error) {
-      console.error('Error completing task:', error);
-      toast.error('Failed to complete task');
-    } finally {
-      setProcessingTaskId(null);
+      
+      setTimeout(() => {
+        setAnimateReward(null);
+      }, 2000);
     }
+    
+    setIsLoading(false);
   };
-
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'easy': return 'bg-green-500/20 text-green-400';
-      case 'medium': return 'bg-yellow-500/20 text-yellow-400';
-      case 'hard': return 'bg-red-500/20 text-red-400';
-      default: return 'bg-blue-500/20 text-blue-400';
-    }
-  };
-
-  const getDifficultyIcon = (difficulty) => {
-    switch (difficulty) {
-      case 'easy': return <Zap className="w-4 h-4" />;
-      case 'medium': return <Star className="w-4 h-4" />;
-      case 'hard': return <Award className="w-4 h-4" />;
-      default: return null;
-    }
-  };
-
-  const getTaskTypeIcon = (type) => {
-    switch (type) {
-      case 'daily': return <Calendar className="w-4 h-4" />;
-      case 'weekly': return <Calendar className="w-4 h-4" />;
-      case 'one-time': return <SquareCheck className="w-4 h-4" />;
-      default: return null;
+  
+  // Get difficulty icon and color
+  const getDifficultyDetails = (difficulty: TaskDifficulty) => {
+    switch(difficulty) {
+      case 'easy':
+        return { 
+          icon: <Star className="h-5 w-5 text-green-400" />, 
+          label: 'Easy',
+          color: 'bg-green-400/20 text-green-400'
+        };
+      case 'medium':
+        return { 
+          icon: <Star className="h-5 w-5 text-yellow-400" />, 
+          label: 'Medium',
+          color: 'bg-yellow-400/20 text-yellow-400'
+        };
+      case 'hard':
+        return { 
+          icon: <Star className="h-5 w-5 text-red-400" />, 
+          label: 'Hard',
+          color: 'bg-red-400/20 text-red-400'
+        };
+      default:
+        return { 
+          icon: <Star className="h-5 w-5 text-green-400" />, 
+          label: 'Easy',
+          color: 'bg-green-400/20 text-green-400'
+        };
     }
   };
   
-  const filterTasks = (tasks) => {
-    const completed = tasks.filter(task => isTaskCompleted(task.id));
-    const incomplete = tasks.filter(task => !isTaskCompleted(task.id));
-    return { completed, incomplete };
+  // Get frequency icon and label
+  const getFrequencyDetails = (frequency: TaskFrequency) => {
+    switch(frequency) {
+      case 'daily':
+        return { 
+          icon: <Calendar className="h-5 w-5 text-bork-green" />, 
+          label: 'Daily'
+        };
+      case 'weekly':
+        return { 
+          icon: <Clock className="h-5 w-5 text-bork-green" />, 
+          label: 'Weekly'
+        };
+      case 'one-time':
+        return { 
+          icon: <Target className="h-5 w-5 text-bork-green" />, 
+          label: 'One-time'
+        };
+      default:
+        return { 
+          icon: <Target className="h-5 w-5 text-bork-green" />, 
+          label: 'One-time'
+        };
+    }
   };
 
-  const { completed: completedTasks, incomplete: incompleteTasks } = filterTasks(supabaseTasks);
-
-  if (loading) {
-    return (
-      <div className="container mx-auto py-10 px-4 animate-fade-in">
-        <h1 className="text-3xl font-bold mb-6 text-center neon-text">$BORK Tasks</h1>
-        <div className="max-w-md mx-auto">
-          <Card className="p-6 mb-8 bork-card">
-            <div className="space-y-4">
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <div className="flex gap-4">
-                <Skeleton className="h-16 w-1/3" />
-                <Skeleton className="h-16 w-1/3" />
-                <Skeleton className="h-16 w-1/3" />
-              </div>
-            </div>
-          </Card>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array(6).fill(0).map((_, i) => (
-            <Card key={i} className="bork-card overflow-hidden">
-              <div className="p-6">
-                <Skeleton className="h-6 w-3/4 mb-4" />
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-2/3 mb-4" />
-                <div className="flex justify-between mb-4">
-                  <Skeleton className="h-6 w-20" />
-                  <Skeleton className="h-6 w-20" />
-                </div>
-                <Skeleton className="h-10 w-full" />
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto py-10 px-4 animate-fade-in">
-      <h1 className="text-4xl font-bold mb-2 text-center neon-text">$BORK Tasks</h1>
-      <p className="text-gray-400 text-center mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>Complete tasks to earn $BORK rewards</p>
-      
-      {!connected ? (
-        <div className="max-w-md mx-auto text-center mb-10 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-          <Card className="p-8 bork-card">
-            <div className="flex flex-col items-center">
-              <div className="mb-6">
-                <img 
-                  src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeHU5NTJkNnl3OXMydWk4OGE0bWwya3pzcWdldzh6a3Q4YnVyZjluaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/xT0xeE5KmUgBDRj6Lu/giphy.gif" 
-                  alt="Doge" 
-                  className="w-24 h-24 object-cover rounded-full border-2 border-bork-green shadow-[0_0_15px_rgba(57,255,20,0.5)]"
-                />
-              </div>
-              <h2 className="text-xl font-semibold mb-4">Connect your wallet to start earning $BORK</h2>
-              <Button 
-                onClick={connectWallet} 
-                className="bork-button text-lg px-8 py-6 animate-pulse-green"
-              >
-                Connect Wallet
-              </Button>
-            </div>
-          </Card>
-        </div>
-      ) : (
-        <div className="max-w-4xl mx-auto mb-12 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-          <Card className="p-6 bork-card">
-            <div className={`${isMobile ? 'flex flex-col' : 'grid grid-cols-4'} gap-6`}>
-              {/* Balance */}
-              <div className="col-span-1 flex flex-col items-center justify-center p-4 border border-bork-green/30 rounded-xl hover:border-bork-green/60 transition-all">
-                <h3 className="text-sm font-medium text-gray-400 mb-1">Your Balance</h3>
-                <p className="text-3xl font-bold text-bork-green">{formatLargeNumber(balance)}</p>
-                <p className="text-xs text-gray-500">$BORK</p>
-              </div>
-              
-              {/* Tasks Completed */}
-              <div className="col-span-1 flex flex-col items-center justify-center p-4 border border-bork-green/30 rounded-xl hover:border-bork-green/60 transition-all">
-                <h3 className="text-sm font-medium text-gray-400 mb-1">Tasks Completed</h3>
-                {statsLoading ? (
-                  <Skeleton className="h-8 w-12" />
-                ) : (
-                  <p className="text-3xl font-bold text-white">{stats.totalCompleted}</p>
-                )}
-                <p className="text-xs text-gray-500">total</p>
-              </div>
-              
-              {/* Streak */}
-              <div className="col-span-2 flex flex-col justify-center p-4 border border-bork-green/30 rounded-xl hover:border-bork-green/60 transition-all">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-400">Daily Streak</h3>
-                    {statsLoading ? (
-                      <Skeleton className="h-8 w-20 mt-1" />
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="text-3xl font-bold text-white">{stats.streakCount}</span>
-                        <span className="text-sm text-gray-400">days</span>
-                        {stats.streakCount > 0 && (
-                          <span className="animate-bounce-small">🔥</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs text-gray-400">Daily Bonus</span>
-                    <p className="text-lg font-bold text-bork-green">+{stats.streakBonus} $BORK</p>
+    <div className="container mx-auto px-4 py-8 min-h-screen">
+      {connected ? (
+        <div className="space-y-8">
+          {/* Stats Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <Card className="glassmorphism border-bork-green/30 hover:border-bork-green/60 transition-all duration-300">
+              <CardContent className="p-6 flex items-center space-x-4">
+                <div className="h-12 w-12 rounded-full bg-bork-green/20 flex items-center justify-center">
+                  <Wallet className="h-6 w-6 text-bork-green" />
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm font-medium">Balance</p>
+                  <h3 className="text-2xl font-bold text-white flex items-center">
+                    <span className="text-bork-green">{balance}</span>
+                    <span className="ml-2">$BORK</span>
+                  </h3>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="glassmorphism border-bork-green/30 hover:border-bork-green/60 transition-all duration-300">
+              <CardContent className="p-6 flex items-center space-x-4">
+                <div className="h-12 w-12 rounded-full bg-bork-green/20 flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-bork-green" />
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm font-medium">Tasks Completed</p>
+                  <div className="flex flex-col">
+                    <h3 className="text-2xl font-bold text-white">
+                      {completedTasks.length} <span className="text-sm text-gray-400 font-normal">/ {tasks.length}</span>
+                    </h3>
+                    <Progress 
+                      value={completionPercentage} 
+                      className="h-2 mt-1 bg-white/10" 
+                      indicatorClassName="bg-bork-green" 
+                    />
                   </div>
                 </div>
-                <Progress 
-                  value={stats.streakCount % 7 * (100/7)} 
-                  className="h-2 bg-gray-800" 
-                />
-                <p className="text-xs text-gray-500 mt-1">Login daily to increase your streak and earn bonuses!</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Available Tasks Section */}
-      <div className="mb-10">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Available Tasks</h2>
-          <Badge variant="outline" className="bg-bork-green/10 text-bork-green border-bork-green/30">
-            {incompleteTasks.length} Tasks
-          </Badge>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {incompleteTasks.length > 0 ? incompleteTasks.map((task, index) => (
-            <Card 
-              key={task.id} 
-              className="overflow-hidden transition-all duration-300 hover:scale-[1.02] bork-card animate-fade-in"
-              style={{ animationDelay: `${0.1 * index}s` }}
-            >
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1">{task.title}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="outline" className={getDifficultyColor(task.difficulty)}>
-                        {getDifficultyIcon(task.difficulty)}
-                        {task.difficulty.charAt(0).toUpperCase() + task.difficulty.slice(1)}
-                      </Badge>
-                      <Badge variant="outline" className="bg-blue-500/20 text-blue-400">
-                        {getTaskTypeIcon(task.type)}
-                        {task.type.charAt(0).toUpperCase() + task.type.slice(1)}
-                      </Badge>
+              </CardContent>
+            </Card>
+            
+            <Card className="glassmorphism border-bork-green/30 hover:border-bork-green/60 transition-all duration-300">
+              <CardContent className="p-6 flex items-center space-x-4">
+                <div className="h-12 w-12 rounded-full bg-bork-green/20 flex items-center justify-center">
+                  <Flame className="h-6 w-6 text-bork-green animate-pulse" />
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm font-medium">Daily Streak</p>
+                  <div className="flex items-center">
+                    <h3 className="text-2xl font-bold text-white">{streak || 0}</h3>
+                    <div className="ml-3 bg-bork-green/20 text-bork-green text-xs px-2 py-1 rounded-full flex items-center">
+                      <Gift className="h-3 w-3 mr-1" />
+                      +5 $BORK daily
                     </div>
                   </div>
-                  <div className="bg-bork-green/10 text-bork-green px-3 py-1 rounded-full text-sm font-medium">
-                    {task.reward} $BORK
-                  </div>
                 </div>
-                
-                <p className="text-gray-400 mb-4 text-sm">{task.description}</p>
-                
-                <Button
-                  onClick={() => handleTaskClick(task.id, task.destination_url)}
-                  disabled={processingTaskId === task.id || !connected}
-                  className="w-full bork-button"
-                >
-                  {processingTaskId === task.id ? (
-                    <span className="animate-spin mr-2">⏳</span>
-                  ) : (
-                    <>
-                      {task.destination_url ? (
-                        <>
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Start Task
-                        </>
-                      ) : (
-                        'Complete Task'
-                      )}
-                    </>
-                  )}
-                </Button>
-              </div>
+              </CardContent>
             </Card>
-          )) : (
-            <div className="col-span-3 text-center py-12">
-              <h3 className="text-xl font-semibold mb-2">No Tasks Available</h3>
-              <p className="text-gray-400">Check back soon for new tasks to earn $BORK!</p>
+          </div>
+          
+          {/* Mascot and title */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <div className="relative mr-4">
+                <BorkDog size="small" className="w-16 h-16 animate-bounce-small" />
+                <div className="absolute -bottom-2 -right-1 bg-black rounded-full p-0.5">
+                  <Trophy className="h-6 w-6 text-amber-400" />
+                </div>
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold">Task Dashboard</h1>
+                <p className="text-gray-400">Complete tasks to earn $BORK rewards</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Task Tabs */}
+          <div className="flex space-x-1 p-1 bg-black/30 rounded-xl mb-6 max-w-md">
+            <button 
+              className={cn(
+                "flex-1 py-2 px-4 rounded-lg transition-all text-sm font-medium",
+                activeTab === 'available' 
+                  ? "bg-bork-green text-black" 
+                  : "bg-transparent text-gray-400 hover:text-white hover:bg-white/5"
+              )}
+              onClick={() => setActiveTab('available')}
+            >
+              Available Tasks
+            </button>
+            <button 
+              className={cn(
+                "flex-1 py-2 px-4 rounded-lg transition-all text-sm font-medium",
+                activeTab === 'completed' 
+                  ? "bg-bork-green text-black" 
+                  : "bg-transparent text-gray-400 hover:text-white hover:bg-white/5"
+              )}
+              onClick={() => setActiveTab('completed')}
+            >
+              Completed Tasks
+            </button>
+          </div>
+          
+          {/* Available Tasks */}
+          {activeTab === 'available' && (
+            <div className="space-y-6">
+              {availableTasks.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="mb-4 mx-auto w-16 h-16 rounded-full bg-gray-800/50 flex items-center justify-center">
+                    <Gift className="h-8 w-8 text-gray-500" />
+                  </div>
+                  <h3 className="text-xl font-medium text-gray-300 mb-2">All tasks completed!</h3>
+                  <p className="text-gray-500 max-w-md mx-auto">
+                    You've completed all available tasks. Check back soon for new tasks to earn more $BORK!
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {availableTasks.map((task) => {
+                    const difficultyDetails = getDifficultyDetails(task.difficulty);
+                    const frequencyDetails = getFrequencyDetails(task.type);
+                    
+                    return (
+                      <Card 
+                        key={task.id} 
+                        className="glassmorphism group rounded-xl border-bork-green/30 hover:border-bork-green transition-all duration-300 overflow-hidden"
+                      >
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-bork-green via-bork-green/80 to-transparent" />
+                        
+                        <CardContent className="p-6 relative">
+                          {/* Animated particles */}
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                            <Sparkles className="h-5 w-5 text-bork-green/60 animate-pulse" />
+                          </div>
+                          
+                          {/* Task content */}
+                          <div className="mb-6">
+                            <div className="flex justify-between items-start mb-2">
+                              <h3 className="text-xl font-bold group-hover:text-bork-green transition-colors duration-300">
+                                {task.title}
+                              </h3>
+                              <div className={`px-2 py-1 rounded-full text-xs font-medium ${difficultyDetails.color}`}>
+                                {difficultyDetails.icon}
+                                <span className="ml-1">{difficultyDetails.label}</span>
+                              </div>
+                            </div>
+                            
+                            <p className="text-gray-400 text-sm mb-4">
+                              {task.description}
+                            </p>
+                            
+                            <div className="flex items-center space-x-3">
+                              <div className="flex items-center text-xs text-gray-400">
+                                {frequencyDetails.icon}
+                                <span className="ml-1">{frequencyDetails.label}</span>
+                              </div>
+                              
+                              <div className="flex items-center text-xs">
+                                <Award className="h-4 w-4 text-bork-green mr-1" />
+                                <span className="font-bold text-bork-green">{task.reward}</span>
+                                <span className="ml-1 text-gray-400">$BORK</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Task actions */}
+                          <div className="flex justify-between items-center">
+                            {task.destinationUrl && (
+                              <a 
+                                href={task.destinationUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-bork-green text-sm font-medium hover:underline flex items-center"
+                              >
+                                View Details
+                                <ArrowRight className="h-4 w-4 ml-1" />
+                              </a>
+                            )}
+                            
+                            <Button 
+                              onClick={() => handleCompleteTask(task.id)}
+                              disabled={isLoading}
+                              className="ml-auto relative overflow-hidden group"
+                            >
+                              {animateReward && animateReward.taskId === task.id && (
+                                <span 
+                                  className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-bork-green font-bold animate-float"
+                                >
+                                  +{animateReward.amount}
+                                </span>
+                              )}
+                              <CheckCircle className="mr-2" />
+                              Complete Task
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Completed Tasks */}
+          {activeTab === 'completed' && (
+            <div className="space-y-6">
+              {completedTasks.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="mb-4 mx-auto w-16 h-16 rounded-full bg-gray-800/50 flex items-center justify-center">
+                    <CheckCircle className="h-8 w-8 text-gray-500" />
+                  </div>
+                  <h3 className="text-xl font-medium text-gray-300 mb-2">No completed tasks yet</h3>
+                  <p className="text-gray-500 max-w-md mx-auto">
+                    Start completing tasks to earn $BORK rewards and see your progress here!
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {completedTasks.map((task) => {
+                    const difficultyDetails = getDifficultyDetails(task.difficulty);
+                    const frequencyDetails = getFrequencyDetails(task.type);
+                    
+                    return (
+                      <Card 
+                        key={task.id} 
+                        className="glassmorphism rounded-xl border-gray-800 bg-black/40"
+                      >
+                        <CardContent className="p-6 relative">
+                          <div className="absolute top-4 right-4">
+                            <div className="h-8 w-8 rounded-full bg-bork-green/20 flex items-center justify-center">
+                              <CheckCircle className="h-5 w-5 text-bork-green" />
+                            </div>
+                          </div>
+                          
+                          <div className="mb-6 pr-8">
+                            <h3 className="text-lg font-bold text-gray-400 line-through decoration-2 mb-2">
+                              {task.title}
+                            </h3>
+                            
+                            <p className="text-gray-500 text-sm mb-4 line-through decoration-1">
+                              {task.description}
+                            </p>
+                            
+                            <div className="flex items-center space-x-3">
+                              <div className="flex items-center text-xs text-gray-600">
+                                {frequencyDetails.icon}
+                                <span className="ml-1">{frequencyDetails.label}</span>
+                              </div>
+                              
+                              <div className="flex items-center text-xs">
+                                <Award className="h-4 w-4 text-gray-500 mr-1" />
+                                <span className="font-bold text-gray-500">{task.reward}</span>
+                                <span className="ml-1 text-gray-600">$BORK</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="text-gray-500 text-sm italic">
+                            Completed
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
-      </div>
-      
-      {/* Completed Tasks Section */}
-      {connected && completedTasks.length > 0 && (
-        <div>
-          <div className="flex items-center mb-6">
-            <h2 className="text-2xl font-bold text-white mr-auto">Completed Tasks</h2>
-            <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/30">
-              {completedTasks.length} Completed
-            </Badge>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="mb-8 relative">
+            <BorkDog size="large" className="w-40 h-40 animate-bounce-small" />
+            <div className="absolute -bottom-4 -right-4 bg-black rounded-full p-1">
+              <Wallet className="h-8 w-8 text-bork-green animate-pulse" />
+            </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {completedTasks.map((task, index) => (
-              <Card 
-                key={task.id} 
-                className="overflow-hidden transition-all duration-300 bork-card border-bork-green animate-fade-in opacity-80 hover:opacity-100"
-                style={{ animationDelay: `${0.1 * index}s` }}
-              >
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-1 flex items-center">
-                        <Check className="w-5 h-5 mr-2 text-bork-green" />
-                        {task.title}
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline" className={getDifficultyColor(task.difficulty)}>
-                          {getDifficultyIcon(task.difficulty)}
-                          {task.difficulty.charAt(0).toUpperCase() + task.difficulty.slice(1)}
-                        </Badge>
-                        <Badge variant="outline" className="bg-blue-500/20 text-blue-400">
-                          {getTaskTypeIcon(task.type)}
-                          {task.type.charAt(0).toUpperCase() + task.type.slice(1)}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="bg-bork-green/10 text-bork-green px-3 py-1 rounded-full text-sm font-medium">
-                      {task.reward} $BORK
-                    </div>
-                  </div>
-                  
-                  <p className="text-gray-400 mb-4 text-sm">{task.description}</p>
-                  
-                  <Button
-                    onClick={() => task.destination_url && window.open(task.destination_url, '_blank')}
-                    className="w-full bg-black border border-bork-green text-bork-green hover:bg-bork-green/10"
-                  >
-                    <Check className="w-4 h-4 mr-2" />
-                    {task.destination_url ? 'Visit Again' : 'Completed'}
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-center">Connect Your Wallet</h1>
+          <p className="text-gray-400 mb-8 text-center max-w-md">
+            Connect your wallet to view available tasks and start earning $BORK rewards!
+          </p>
+          
+          <Button 
+            onClick={connectWallet}
+            size="lg"
+            className="px-8 py-6 h-auto text-lg font-bold"
+          >
+            <Wallet className="mr-2 h-5 w-5" />
+            Connect Wallet
+          </Button>
         </div>
       )}
     </div>

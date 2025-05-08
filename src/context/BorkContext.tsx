@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +27,7 @@ export interface User {
     completedAt: string;
   }[];
   joinedAt: string;
+  streak?: number;
 }
 
 interface BorkContextType {
@@ -40,6 +40,7 @@ interface BorkContextType {
   referrals: string[];
   isAdmin: boolean;
   users: User[];
+  streak: number;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
   completeTask: (taskId: string) => Promise<boolean>;
@@ -62,6 +63,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [referralCode, setReferralCode] = useState('');
   const [referrals, setReferrals] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [streak, setStreak] = useState(0);
 
   const fetchTasks = async () => {
     try {
@@ -172,6 +174,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setReferralCode(userData.referral_code);
       setReferrals(referralsData?.map(r => r.referred_address) || []);
       setIsAdmin(userData.is_admin);
+      setStreak(userData.streak_count || 0);
       
       // Mark tasks as completed
       const completedTaskIds = new Set(userTasksData?.map(ut => ut.task_id) || []);
@@ -283,6 +286,28 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Fetch user data from Supabase or create new user
       const userData = await fetchUserData(address);
+
+      // Update user streak
+      try {
+        const { data: streakData, error: streakError } = await supabase.rpc(
+          'update_user_streak', 
+          { user_addr: address }
+        );
+        
+        if (!streakError && streakData) {
+          console.log('Updated streak:', streakData);
+          setStreak(streakData);
+          
+          // Show streak notification if greater than 1
+          if (streakData > 1) {
+            toast.success(`🔥 ${streakData} day streak! +5 $BORK`, {
+              description: 'Keep logging in daily to earn more!'
+            });
+          }
+        }
+      } catch (streakError) {
+        console.error('Error updating streak:', streakError);
+      }
       
       if (userData) {
         toast.success("Wallet connected successfully!");
@@ -305,6 +330,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setReferralCode('');
     setReferrals([]);
     setIsAdmin(false);
+    setStreak(0);
     
     // Clear stored wallet from localStorage
     localStorage.removeItem('borkchain_wallet');
@@ -514,6 +540,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     referrals,
     isAdmin,
     users,
+    streak,
     connectWallet,
     disconnectWallet,
     completeTask,
