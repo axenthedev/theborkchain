@@ -300,7 +300,7 @@ export const BorkProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           
           // Show streak notification if greater than 1
           if (streakData > 1) {
-            toast.success(`🔥 ${streakData} day streak! +5 $BORK`, {
+            toast.success(`🔥 ${streakData} day streak! +50 $BORK`, {
               description: 'Keep logging in daily to earn more!'
             });
           }

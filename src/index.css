@@ -95,6 +95,9 @@
 
   body {
     @apply bg-black text-white font-bork;
+    background-image: radial-gradient(circle at center, rgba(20, 30, 20, 0.3) 0%, rgba(0, 0, 0, 0.9) 100%);
+    background-size: cover;
+    background-attachment: fixed;
   }
 
   .neon-text {
