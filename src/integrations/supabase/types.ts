@@ -196,8 +196,10 @@ export type Database = {
           id: string
           is_admin: boolean
           joined_at: string
+          last_login: string | null
           referral_code: string
           referred_by: string | null
+          streak_count: number | null
           total_earned: number
         }
         Insert: {
@@ -206,8 +208,10 @@ export type Database = {
           id?: string
           is_admin?: boolean
           joined_at?: string
+          last_login?: string | null
           referral_code: string
           referred_by?: string | null
+          streak_count?: number | null
           total_earned?: number
         }
         Update: {
@@ -216,8 +220,10 @@ export type Database = {
           id?: string
           is_admin?: boolean
           joined_at?: string
+          last_login?: string | null
           referral_code?: string
           referred_by?: string | null
+          streak_count?: number | null
           total_earned?: number
         }
         Relationships: [
@@ -250,6 +256,10 @@ export type Database = {
       update_badge_tier: {
         Args: { wallet_addr: string }
         Returns: undefined
+      }
+      update_user_streak: {
+        Args: { user_addr: string }
+        Returns: number
       }
     }
     Enums: {
