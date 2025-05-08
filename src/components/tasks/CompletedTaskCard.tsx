@@ -1,6 +1,4 @@
-
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Award, Calendar, CheckCircle, Clock, Target } from 'lucide-react';
 import { Task } from '@/context/BorkContext';
 
@@ -40,15 +38,9 @@ const CompletedTaskCard: React.FC<CompletedTaskCardProps> = ({ task }) => {
   const frequencyDetails = getFrequencyDetails(task.type as TaskFrequency);
   
   return (
-    <Card className="glassmorphism rounded-xl border-gray-800 bg-black/50">
-      <CardContent className="p-6 relative">
-        <div className="absolute top-4 right-4">
-          <div className="h-8 w-8 rounded-full bg-bork-green/20 flex items-center justify-center">
-            <CheckCircle className="h-5 w-5 text-bork-green" />
-          </div>
-        </div>
-        
-        <div className="mb-6 pr-8">
+    <div className="bg-black/60 rounded-lg border border-bork-green/30 p-4">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
           <h3 className="text-lg font-bold text-gray-400 line-through decoration-2 mb-2">
             {task.title}
           </h3>
@@ -71,11 +63,15 @@ const CompletedTaskCard: React.FC<CompletedTaskCardProps> = ({ task }) => {
           </div>
         </div>
         
-        <div className="text-gray-500 text-sm italic">
-          Completed
+        <div className="h-8 w-8 rounded-full bg-bork-green/20 flex items-center justify-center ml-4">
+          <CheckCircle className="h-5 w-5 text-bork-green" />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+      
+      <div className="text-gray-500 text-sm italic">
+        Completed
+      </div>
+    </div>
   );
 };
 
